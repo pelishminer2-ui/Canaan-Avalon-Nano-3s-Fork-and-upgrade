@@ -18,6 +18,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="pelish-logo.png">
     <title>Avalon Device</title>
+    <script>
+        (function () {
+            var theme = "";
+            try {
+                var s = localStorage.getItem("pelish-theme");
+                if (s === "light" || s === "dark") theme = s;
+            } catch (e) {}
+            if (!theme) {
+                try {
+                    var m = String(document.cookie || "").match(/(?:^|; )pelish-theme=(light|dark)/);
+                    if (m) theme = m[1];
+                } catch (e2) {}
+            }
+            if (theme !== "dark") theme = "light";
+            try {
+                var root = document.documentElement;
+                if (root && root.setAttribute) root.setAttribute("data-theme", theme);
+            } catch (e3) {}
+        })();
+    </script>
+    <link rel="stylesheet" href="chrome.css">
     <style>
         * {
             margin: 0;
@@ -28,12 +49,7 @@
         body {
             font-family: Arial, sans-serif;
             background-color: #f3f4f8;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
             min-height: 100vh;
-            padding: 20px 16px;
             color: #333;
         }
 
@@ -56,8 +72,8 @@
         }
 
         .login-logo .brand-logo-pelish {
-            width: 96px;
-            height: 96px;
+            width: 128px;
+            height: 128px;
             border-radius: 50%;
             object-fit: contain;
             filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.14));
@@ -72,9 +88,9 @@
         }
 
         .login-logo .brand-logo-canaan {
-            height: 42px;
+            height: 56px;
             width: auto;
-            max-width: 165px;
+            max-width: 240px;
             object-fit: contain;
             flex-shrink: 0;
             background-color: transparent;
@@ -101,8 +117,8 @@
             }
 
             .login-logo .brand-logo-pelish {
-                width: 76px;
-                height: 76px;
+                width: 96px;
+                height: 96px;
             }
 
             .login-logo .brand-logo-divider {
@@ -110,7 +126,7 @@
             }
 
             .login-logo .brand-logo-canaan {
-                height: 34px;
+                height: 44px;
             }
         }
 
@@ -218,9 +234,20 @@
         }
     </style>
     <script src="./qrcode.min.js"></script>
+    <script src="chrome.js"></script>
 </head>
 
-<body>
+<body class="login-page">
+    <header class="login-top">
+        <div class="header-logo">
+            <img class="brand-logo-pelish" src="pelish-logo.png" alt="Pelish Crypto &amp; More">
+            <img class="brand-logo-canaan" src="canaan-logo.png" alt="Canaan">
+        </div>
+        <div class="theme-choice" role="group" aria-label="Color theme">
+            <button type="button" id="theme-light" onclick="applyTheme('light')">Light</button>
+            <button type="button" id="theme-dark" onclick="applyTheme('dark')">Dark</button>
+        </div>
+    </header>
     <div class="login-container">
         <div class="login-logo">
             <img class="brand-logo-pelish" src="pelish-logo.png" alt="Pelish Crypto &amp; More">

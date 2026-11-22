@@ -10,7 +10,7 @@ Processes, layers and deployment: [MINER.md](../miner/MINER.md#overview).
 |---|---|
 | `app/miner_web_main.c` | entry: `miner_web [port] [systemcfg.ini]`, plain-HTTP port `80` by default |
 | `web/` | the router, the civetweb glue, firmware and wallpaper upload, tokens, log download, the HTTPS certificate |
-| `assets/` | the pages (`login.html`, `dashboard.html`, `pools.html`, `qr_login.html`, `upgrade.html`) and brand logos (`pelish-logo.png`, `canaan-logo.png`) |
+| `assets/` | the pages (`login.html`, `dashboard.html`, `pools.html`, `qr_login.html`, `upgrade.html`, `network.html`, `log.html`, `password.html`, `reset.html`), shared chrome (`chrome.css`, `chrome.js`), and brand logos (`pelish-logo.png`, `canaan-logo.png`) |
 | `third_party/` | `js-sha256` and `qrcodejs`, loaded by the pages |
 | `services/miner-web.init` | starts `miner_web` on port 80 with `/data/userconfig/systemcfg.ini` and restarts it when it exits |
 | `tests/` | host tests: `docs/TESTING.md` |

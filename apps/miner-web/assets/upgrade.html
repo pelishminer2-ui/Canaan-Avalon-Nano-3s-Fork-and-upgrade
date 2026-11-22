@@ -17,384 +17,114 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" type="image/png" href="pelish-logo.png">
-    <title>Avalon Device</title>
+    <title>Firmware Upgrade</title>
+    <script>
+        (function () {
+            var theme = "";
+            try {
+                var s = localStorage.getItem("pelish-theme");
+                if (s === "light" || s === "dark") theme = s;
+            } catch (e) {}
+            if (!theme) {
+                try {
+                    var m = String(document.cookie || "").match(/(?:^|; )pelish-theme=(light|dark)/);
+                    if (m) theme = m[1];
+                } catch (e2) {}
+            }
+            if (theme !== "dark") theme = "light";
+            try {
+                var root = document.documentElement;
+                if (root && root.setAttribute) root.setAttribute("data-theme", theme);
+            } catch (e3) {}
+        })();
+    </script>
+    <link rel="stylesheet" href="chrome.css">
     <style>
-        body {
-            background-color: #f3f4f8;
-            margin: 0;
-            padding: 0;
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-            font-weight: 400;
-            font-style: normal;
-        }
-
-        .container {
-            width: calc(100vw - 16%);
-            margin: 0 auto;
-        }
-
-        .header {
-            min-height: 76px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px 24px;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 20px;
-            padding: 10px 30px;
-            box-sizing: border-box;
-            color: #060000;
-            background-color: #fff;
-            border-radius: 50px;
-        }
-
-        .header-left {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px 0;
-            align-items: center;
-        }
-
-        .header-logo {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            cursor: pointer;
-        }
-
-        .header-logo .brand-logo-pelish {
-            width: 48px;
-            height: 48px;
-            border-radius: 50%;
-            object-fit: contain;
-            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.14));
-            flex-shrink: 0;
-        }
-
-        .header-logo .brand-logo-divider {
-            width: 1px;
-            height: 28px;
-            background-color: #dcdfe8;
-            flex-shrink: 0;
-        }
-
-        .header-logo .brand-logo-canaan {
-            height: 30px;
-            width: auto;
-            object-fit: contain;
-            flex-shrink: 0;
-            background-color: transparent;
-        }
-
-        .header-logo .brand-logo-pelish,
-        .header-logo .brand-logo-canaan {
-            background-color: transparent;
-        }
-
+        .brand-logo-pelish,
+        .brand-logo-canaan { background-color: transparent; }
         @media (prefers-color-scheme: dark) {
-            .header-logo .brand-logo-divider {
-                background-color: #6b7384;
-            }
-
-            .header-logo .brand-logo-canaan {
-                filter: brightness(1.18);
-            }
-        }
-
-        .header-name {
-            margin-left: 24px;
-            height: 40px;
-            line-height: 44px;
-            font-weight: 500;
-        }
-
-        .header-separator {
-            border: 1px solid #a0a0a0;
-            height: 20px;
-            margin: 0 24px;
-        }
-
-        .header-status {
-            width: 14px;
-            height: 14px;
-            border-radius: 50%;
-            background-color: #26e68e;
-        }
-
-        .header-status-text {
-            margin-left: 10px;
-            height: 40px;
-            line-height: 44px;
-        }
-
-        .header .header-right {
-            display: flex;
-            align-items: center;
-            color: #060000;
-        }
-
-        .header-load-icon {
-            width: 66px;
-            height: 52px;
-            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAAA0CAMAAAAJ8R4GAAAAAXNSR0IB2cksfwAAATtQTFRF8/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48PL4r8r83uf58/T41+P5gq/+cKT/0d/6ssz72+X51uL6iLL+h7L+p8b8z976utH7l7z96u/4faz+dqf/cqX/f63+7vH47PD4m779zd365ez5uND7gK7+ocL8xdj6fKv+2OT5krn9jLX9ga/+4ur5caT/ibP+w9f7v9T74en5irT+t8/7hrH+ncD9udH75Ov56O35g7D+d6j/rMn85+357/H41eL6lbv9n8H8wNX7jbb98/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T4gmel9gAAAGl0Uk5TAAY/gK7U7fn/MZnuL7X+tgiO+48kzzXq7DfzjS60nAfwPq/////V//////////////////////////////////////////////////////////////////////////EyM7kwCdD0JSb6+0WfXAAAAklJREFUeJytl81r1EAYxt/HuLvustumH2o1sKWVVSoiqCcPflARD/VQKhUFi1/g/+RBrPQgguAH4kEEKSJ40ouiyHYtrdstZWmjFld3u44zbqpJm0ySmX0OISHv/JJM3nned0AewRH5iznyjnFfpLG2JWCwWwZjNX9EFqhHAAgl0VzdjDCBHxEBQhk07Q2IXnyPARDKsaoHsQNfYxLEe1dciF1Yjk0g6maVf4heI/47CHU2qw7CTMSdh3XlGnYL0VULjQ1ST/kvIpuM8ze9ymS+CESuoUwg2j7PEelE1Jz0U7JRA+WXNAg8o+bQj0UtRB/DQEWLINLSSGgiGhhcCAmxgHnZ/d3YOycn9HMPK8kC8uizZfdpz2/uUkVZhIlUkE8KFSDSLgl8CI5h2CZ7wv711ZPBu8AgOYKGtnKPzOEbdeKtIoIOczPq4TO6tPO1KoLoKPCKrIHyZwXEkDOHh0h8w7GXCojjy+4pPDGtgDiJF/w4PCtNLDniVKm76zmdLhaeKSPozCfah7UiWR1PVREjeN86OTCTCswKjpAluHWk6rjJwUeBQSxkmY3CnuW/9afkS8zQxX7uTUfhviwgH2o54x9tqeNwy2mD8Wnbb127CJyfbkcposv3tBAXJnliXb2rQbh4W1T2aw81moP6qm6Lkl5pdTnXH6s2SpfYrba1a7w6n51SIEw8+d80cgaT10U/eVtXohsPYjfQYzfJgyDTYJptPFfW+BWZkPLbTAhF3tKM33FdbnBOsakaLE9MBgy+MmWVNm2s/gByJJy67arFzwAAAABJRU5ErkJggg==");
-            background-repeat: no-repeat;
-            background-position: center;
-            cursor: pointer;
-        }
-
-        .header-load-icon:hover {
-            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEIAAAA0CAMAAAAJ8R4GAAAAAXNSR0IB2cksfwAAAUpQTFRFcKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/c6b/u9P/h7P/cKT/jrf/6/L/////lrz/t9H/irX/kLj/5e//5u//w9n/l73/rsz/1OT/eqr/mL3/8fb/+fv//f7/7vT/dqj/eKn/0OH/mb7/f67/sM3/yd3/osT/8vf/jbf/2ef/daf/4Ov/7PP/g7D//v//5O7/pcb/lbz/qcj/hLH/4u3/ss7/5/D/zuD/r8z/4+3/2uf/gK7/fKv/6vL/9/r/vdX/faz/dKf/kbn/1+X/y97/qMf/3+v/8Pb/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/cKT/sMq/OgAAAG50Uk5TAAY/gK7U7fn/MZnuL7X+tgiO+48kzzXq7DfzjS60nAfwPq/////V////////////////////////////////////////////////////////////////////////////////8TIzuTAJ0PQlJvrDO2itAAACSElEQVR4nK2X3UsUURjG36dhV3fZzdG1UhdWNCqLhCgivMgMiegqgkAqCpIywX/Hi8jwIrqIQgSvIiTCJYguBKnoAzHQtpVwdSNpa7fteE675ozOnJk5Z5+L+WDe85uv9zzve0A2oSpyFqvKPsZ6EsGfXS6DrTIYKzgjYkDRB0AojPL6ToQJ/PQJEIqinN+GaMaPAAChOFuxIfbie0CCeO6sBdGK1cAEoiaW/Y9oNoI/g1BDeaWKMENBv8Om4qV8BdFY8Ix1UyLzDxELB/mbdkWjXwQiXlImEO1Z4ohIyG9OOilcKoBS3zQIPKMW0Y5lLUQLQ0dWiyDS0ghpIkro/OoRkgSWZNfbcHBRTmjnHrYgC0ihJS+7Tvv/cpeal0WYqHPzSaEDEGkXBt67xzDUy+5wZHP2RPHWNUiOoG5hZru5H5mYVUTQCeS4KaKY3/dKFUHUA7ykZEfmswKi+01lf5rSfNs7o4A4k7N+wr4XCoizeM63/Zh2jfBEnJtPND2j858OPVVG0IUPdBh4R0cxpYq4iLnKwbGPibQEIUvw5Knlqpscn3ANYh7T7DJyPB9O/pK8iek52QdeN3Q9kgWkPC3nCtJSx+GWUwPj07bfonYRuDZdi1JEtx5qIa6P8cQaeqBBuHFPVPY7TzSag+K6bosSWat0OcMTqo3STXa3Zu0ar86XxhUIg5NbTSNnMHlddJK9dSUaeRy4gR4YJRuCTINptvFcMeO3b0Kd02JCyPeS5up9y+k25xSLqs7M4JjL4NvjyYUdC6sNAc+aui2vyV4AAAAASUVORK5CYII=");
-        }
-
-        .header-load-text {
-            margin-left: 20px;
-        }
-
-        .header-load-time {
-            margin-left: 25px;
-        }
-
-        .header-logout {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-        }
-
-        .header-logout-icon {
-            margin: 0 20px 0 70px;
-            width: 55px;
-            height: 55px;
-            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADcAAAA3CAMAAACfBSJ0AAAAAXNSR0IB2cksfwAAAWVQTFRF8/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T47/H1ys/bu8HQucDOucDP09fhyc7a8/T46evxqLHCoaq9usDP8/T4s7rKv8XT3+Lq4eTrxszY0tbg8/T4pa3AxcvX8/T48/T4qrLE8/T48/T4qbHD7vD15unv5+nv5+rwwMbT0dXfw8nW8/T4v8XSwsjVys/asbnJwcfUtbzL8PL2tr3M2t7mxMrWxcrXsLjIqrLDy9DbqLDCt77N8/T4pK2/4OPquL7N8/T4sLfIsbjIztLduL/NzdLdpq7A8/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T48/T4xotZtAAAAHd0Uk5TABNShqzS6vz/1LKJGnXM/XY2sCm4twj5hyhG8fJaW/5FJAfN+rkb/////////xj/////VP///////1P//4qt/7TT///////////l/////////////////////xn////O////////sSVHSFxJ84z7Mbo4N3fm1bU27yloAAACvklEQVR4nKWWz08TURDHZyj9IaC0tqEWWpGfWoNiQBMM0QQ0etADMSaN0ejFKIkH4z9i4gEVbh6UVBORixqNiYlGgtF4wgRBTUAKmJYWYy1F6XN3225235vttuV76evsfHbe2zdv3iAQwpwYsyCmGKNcBEuNBKS1Bjur+PfbjHNhUnwVsGoWL8S5UXhxXlszMSOuLuZZNcIAajHzk+R8UYsxJWvDs0hw9RijnLXyZCICF1gvMMe8am3zHLcTl80xAC+b03G7UkVEUyJaIhquad10bXm5bd9VrhkXisUAGti3PLcjUTwG4FzKcb5MkYvLyp9czHIew+SiFZhROFeqNAxgS1zmtv8platakbj25bS5p1527xcE51qpGIAjgdAi7F2jXCOAVcxKeWSdobiGr7h/lU/M3ZhNIvwM0GL7O0tN9Bd2T/HGjo1KhVybBjiQBscnAuxCi5W3Bas+quODSSDBQ3j0vcBtm1THbZVAgj3YNyFwrncAvcpUEZWS4n3N+yDaKkiub0lrEiL2Y+sPkjsW0dn4iB50CHNXuOPcrvpfchM1iMdzgRdcPIP1nZzT2Rrxme5/v9H33Ku7hJqecj5I7Z/MncLsYyU9G5/zPj1UvrSPq+OBaSqanC9ifgb3jKljOc+CjwVMys/zb/nzcHaq45GG2/dQxKTzAJfCnLHVCp0r8l34QN6OrvsiBqF71Hm/gB/kn/pXUtrUjRKYct7LrS9l1LOLI5upn9A2b+qpU65eg69ayO1C8sdjm7uPoPkIv4cFFHqj3n8l3benh0HlYHCs2Pv9zB3QcOX2E0X2L/4Tt4Hj4Np41Ay7zIbyQ21/lqAaVI3QSfVnUj8YwhFj6goL0/2gpOt41wgbZLd0sbnHN5Jh4ljZQzU39Raiv776JKrvrwc8w6b9ddZ4eLLX0j0ac59DHOqcoD7Xf33aw45XLcVHAAAAAElFTkSuQmCC");
-            background-repeat: no-repeat;
-            background-position: center;
-        }
-
-        .header-logout-text {
-            color: #a0a0a0;
-        }
-
-        .upgrade-wraper {
-            width: 100%;
-            padding: 20px;
-            margin-top: 20px;
-            box-sizing: border-box;
-            background-color: #ecedef;
-            border-radius: 34px;
-            display: flex;
-            flex-wrap: wrap;
-        }
-
-        .upgrade-wraper-left {
-            width: 80%;
-        }
-
-        .upgrade-panel {
-            width: 100%;
-            padding: 20px;
-            box-sizing: border-box;
-            background-color: #fff;
-            border-radius: 30px;
-        }
-
-        .drop-area {
-            height: 200px;
-            padding: 20px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            color: #a0a0a0;
-            background-color: #f9f9fb;
-            border-radius: 20px;
-            cursor: pointer;
-        }
-
-        .drop-area:hover,
-        .drop-area.dragover {
-            outline: 1px solid #418cff;
-        }
-
-        .drop-file {
-            margin-top: 20px;
-            font-size: 18px;
-            color: #060000;
-        }
-
-        .file-input {
-            display: none;
-        }
-
-        .progress-track {
-            width: 100%;
-            height: 14px;
-            margin-top: 20px;
-            background-color: #f9f9fb;
-            border-radius: 7px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            width: 0;
-            height: 100%;
-            background-color: #418cff;
-            transition: width 0.2s;
-        }
-
-        .upgrade-state {
-            margin-top: 10px;
-            text-align: center;
-            color: #a0a0a0;
-        }
-
-        .upgrade-wraper-right {
-            margin-left: 40px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            flex: 1;
-        }
-
-        .submit.busy {
-            background-color: #a0a0a0;
-            cursor: default;
-        }
-        .return-dashboard {
-            height: 70px;
-            width: 100%;
-            padding-left: 12%;
-            box-sizing: border-box;
-            color: #418cff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMQAAABGCAMAAACkAMuKAAAAAXNSR0IB2cksfwAAAfVQTFRF////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////5ubmra2tf39/XV1dQUFBMDAwJiYmJSUl////5eXlkpKSRUVFICAg5OTk////////1tbWampqIiIi7Ozsc3NzISEh////tbW1Li4u////////+vr6fHx8e3t7////9fX1////////9vb2UlJS////WlpaW1tb////////////s7OzsrKy////6Ojob29v////////09PTZWVl////4uLik5OTjY2N////RERE////zMzM19fX4eHh////rKysv7+/urq6qKio////////fn5+wMDA////xMTEq6urXFxc////Pz8/wcHB////LCwsj4+PMTExKioqvb29y8vLNjY2Ozs7Q0NDJCQkpaWl+Pj4mJiY/Pz80NDQgYGBmpqaU1NTTk5O7u7uTExMYmJiYWFhTU1NX19fbm5uS0tLQEBAjIyM4+Pj0tLSenp6////////////tLS0////////cnJy1dXV////Ly8v////////////////////////////////////////j7CArQAAAKd0Uk5TAAEsYIat0uXy/xJip+moEwJKsPoEX9hG2Ryqq1PvVAeTFMTF3v//////////Ff//////Bsj///////+U//8b8P///x3/tUf//0///wNYWf//Sf//D/f//6////8v/2P///+Q/////4+0///R////5///5v//////////////////////////////////////////SPFd/1yc///a/8ZVrGFMZKmH9e7mzhLMAAAEz0lEQVR4nN2beUxURxzH5ydHBFkBlZDFTUATmtY7JYAGtSZWjAZtFDRqKAgh8YaYVjQai7EaNZoaQY03Eg8wrTdqG7WJV7ybqG3atGlFQ2saqqiIWpEdl91917w3zzcvzGZ2P3/w5ky+P97bmd/M/AYQFZCgNwkIWILagqYw2iP+LR9RNgmH9vBnxlWGRsR5LHjJU5BNoj2v46lBuYERvQBauOuxi+Nx/H+6Qr0RiUB5aYIQi/8li0gjnNAcIDH26eF+pC0gjHCB/mWJRy94qMlrjEgG3ZsSlET8QJVTG9EHHpGNhSXJfV/JqIxwtos7KOlxhCn/ccUIZ7e/yYYu/5Tt9k6YjYFRZ5XerbIVshEDm4iRNZV0ODAO+5WzMCZiE+75U5LONPhF02IAwBtdt0iMf+YrjIn++LYvIRmRohmXBgO8MuwXhfEdnrrY+PiK7+k3wvVYXZkGL6gdYyTzRaCn73fqM2Ik3FBqMsHIyVKId1/npoqRjPDzHQ+fEb2fKBVZjVHv6frKdYWXKlaGn+346zUi+5JSPNLCrJ2IL3ISxcyoM8hnRFykMstlRluZtZNaRfmiHBn1PiMmnFMKh5r/HiTir/LRxM6YE14jICJMLsp+aNJeTfIPfDQx096GO4yY9L1cMq6JPrZqiUk4w0cUM12bO4zo3iYXjP/Lct++p3koskHEc48ReVAv5Sc0Gs/TRkS5TnLRxEwO/g5QN7ecn/g7Q+cPTnS+IFt0aQU07biU+yhC7/PRiex7jIMiG3xWBzl35FX1JDZPu9+RTtdjiwwH5B+Wc3lsfvbrhk5WY5dcKPhWSrtijFoMAqrvPaSOhyR2pkBxrZSe8ZNBg7QD+bdondP3cdHETAHMrpHSM6/p64dVj32gL/UzdC8PSewUwrw9UjpZ74Jn7S65TO88YicXTcwUQ9kOKT3rAlk7apvJe0Dok+1cNDEzB7rKWxpzfyQqs3bPO2/W+dPNXDQxg0H5hj7UVo2ByjJy1wZOqXNtf/ITxgTdiJwNaNF6onW5xtUQxwjq55SUvm4JeV4Hh9W5/+8jIcAmP+y8Vcubz5Ed1IjzwzYZYqeuRBWHTDqLM8SaTXa5q9EKE9dCnMnO1O2YXoFWHqR2FsftMHcAEy+grw/QOovjAL7HFc9vuUsbgz5fxkcTM7mQ0yJvwzIuigqWdrocW3gWRarl6ZraYF2ehsZGgWrLZu2hYN2yCYnNs9DYxlRvKJsugtSItqGMJp5VyoZZi08pWsxHEjv+rX0bhyzOl8IdsqCqcqU0WI+7QuPgETmXLVIqMidXm3YsOiLKt4TWH1UdAaMtX6rrTA/jp3/BURUj38zxPqRF9LaF6srBRTWUsIjCaoHCIjbO9j0lI5ITtAEqm3YZBqiUlHHWxUL/Jv+spoQKlZZqm6TCIO36Yny9WKFClZVkqJBh0FZqemRESvcGlPK8oe3NzT8Cpc4aRkFbCI2+F1ThcwOVLVZNIGOXfwIvxiabVxkHMoZGSKmHPRXBENybUVisyZNh1qN/e4JEZ+t+4sRBH/CePaVUVyYSla8XkEVGVw82lIs7TDlao6xcPfAQt2mhoJdANpZZvATiJbZqPhbsOs5WvIDlOo6/CqCmCOanlfARZZXoqq/G7qguNLsY9Q4HKVXcQa55rQAAAABJRU5ErkJggg==");
-            background-repeat: no-repeat;
-            background-position: left;
-            background-size: contain;
-            border-radius: 38px;
-            cursor: pointer;
-            background-color: #fff;
-        }
-
-        .submit {
-            width: 100%;
-            height: 54px;
-            color: #fff;
-            border-radius: 30px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background-color: #3b3b3b;
-            cursor: pointer;
-        }
-
-        .mask {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(0, 0, 0, 0.3);
-        }
-
-        .loading {
-            position: absolute;
-            top: calc((100vh - 300px) / 2);
-            left: calc((100vw - 500px) / 2);
-            width: 500px;
-            height: 300px;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
-
-        .spinner {
-            width: 80px;
-            height: 80px;
-            animation: spin 1.5s linear infinite;
-        }
-
-        @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
-        }
-
-        .status-text {
-            margin-top: 40px;
-            font-size: 22px;
-            color: #666;
-            text-align: center;
+            .brand-logo-pelish,
+            .brand-logo-canaan { background-color: transparent; }
         }
     </style>
+    <script src="chrome.js"></script>
 </head>
 
-<body>
-    <div class="container">
-        <div class="header">
-            <div class="header-left">
-                <div class="header-logo" onclick="dashboard()">
+<body class="shell">
+    <nav class="sidenav">
+        <a class="nav-brand" href="dashboard.html">
+            <img class="brand-logo-pelish" src="pelish-logo.png" alt="Pelish Crypto &amp; More">
+            <img class="brand-logo-canaan" src="canaan-logo.png" alt="Canaan">
+        </a>
+        <a class="nav-link" href="dashboard.html">Overview</a>
+        <a class="nav-link" href="pools.html">Configuration</a>
+        <a class="nav-link" href="network.html">Network</a>
+        <a class="nav-link" href="log.html">Log</a>
+        <div class="nav-label">System</div>
+        <a class="nav-link nav-sub" href="password.html">Password</a>
+        <a class="nav-link nav-sub active" href="upgrade.html">Upgrade</a>
+        <button type="button" class="nav-btn nav-sub" onclick="navReboot()">Reboot</button>
+        <a class="nav-link nav-sub" href="reset.html">ResetFac</a>
+        <div class="nav-bottom">
+            <span class="nav-link disabled" title="Factory cloud shop. Not served by this LAN miner.">Shop</span>
+            <span class="nav-link disabled" title="System log download needs an API token. Miner Log is the LAN page.">System log</span>
+            <span class="nav-link disabled" title="Factory cloud support. Not served by this LAN miner.">Support</span>
+            <span class="nav-link disabled" title="Factory cloud documents. Not served by this LAN miner.">Documents</span>
+        </div>
+    </nav>
+    <div class="shell-main">
+        <header class="topbar">
+            <div class="topbar-left">
+                <div class="header-logo">
                     <img class="brand-logo-pelish" src="pelish-logo.png" alt="Pelish Crypto &amp; More">
-                    <span class="brand-logo-divider" aria-hidden="true"></span>
                     <img class="brand-logo-canaan" src="canaan-logo.png" alt="Canaan">
                 </div>
                 <div class="header-name">Avalon Device</div>
                 <div class="header-separator"></div>
-                <div class="header-status"></div>
-                <div class="header-status-text">Normal</div>
-            </div>
-            <div class="header-right">
-                <div class="header-load-icon" onclick="updateDashboard()"></div>
-                <div class="header-load-text">Latest reloaded</div>
-                <div class="header-load-time">2024/08/21 23:55:55</div>
-                <div class="header-logout" onclick="logout()">
-                    <div class="header-logout-icon"></div>
-                    <div class="header-logout-text">Log Out</div>
+                <div class="status-pill">
+                    <span class="header-status"></span>
+                    <span class="header-status-text">—</span>
                 </div>
             </div>
-        </div>
-        <div class="upgrade-wraper">
-            <div class="upgrade-wraper-left">
+            <div class="topbar-right">
+                <div class="theme-choice" role="group" aria-label="Color theme">
+                    <button type="button" id="theme-light" onclick="applyTheme('light')">Light</button>
+                    <button type="button" id="theme-dark" onclick="applyTheme('dark')">Dark</button>
+                </div>
+                <button type="button" class="header-load-icon" onclick="updateDashboard()">Reload</button>
+                <div class="header-load-text">latest reloaded</div>
+                <div class="header-load-time">—</div>
+                <button type="button" class="header-logout" onclick="logout()">Logout</button>
+            </div>
+        </header>
+        <div class="page-body">
+            <div class="panel upgrade-wraper">
+                <div class="section-bar">Firmware Upgrade</div>
                 <div class="upgrade-panel">
                     <div class="drop-area" onclick="pickFile()">
-                        <div class="drop-tip">Click here, or drag and drop a software update image file (.aup) to
-                            this area.</div>
+                        <div class="drop-tip">Click here, or drag and drop a software update image file (.aup) to this area.</div>
                         <div class="drop-file"></div>
                     </div>
                     <input class="file-input" type="file" accept=".aup" onchange="fileChosen(this.files)">
-                    <div class="progress-track">
-                        <div class="progress-fill"></div>
-                    </div>
-                    <div class="upgrade-state">Idle</div>
+                    <div class="progress-track"><div class="progress-fill"></div></div>
+                    <div class="upgrade-state">Upload not started.</div>
+                    <div class="form-actions"><button type="button" class="submit" onclick="upload()">Upload</button></div>
                 </div>
             </div>
-            <div class="upgrade-wraper-right">
-                <div class="return-dashboard" onclick="dashboard()">Dashboard</div>
-                <div class="submit" onclick="upload()">Upload</div>
-            </div>
         </div>
+        <footer class="miner-footer">
+            <div><span class="foot-label">Mac Address</span> <span class="macaddress">—</span></div>
+            <div><span class="foot-label">SSID</span> <span class="ssid">—</span></div>
+            <div><span class="foot-label">IP Address</span> <span class="ipaddress" title="The miner API does not report an IP address">—</span></div>
+            <div><span class="foot-label">Firmware Version</span> <span class="version">—</span></div>
+        </footer>
         <div class="mask"></div>
         <div class="loading">
             <svg class="spinner icon" viewBox="0 0 50 50" width="128" height="128">
                 <circle cx="25" cy="25" r="20" fill="none" stroke="#262626" stroke-width="5"
                     stroke-linecap="round" stroke-dasharray="90 150"/>
             </svg>
-
-            <div class="status-text">
-                Restarting
-            </div>
+            <div class="status-text">Restarting</div>
         </div>
     </div>
 </body>
@@ -402,77 +132,43 @@
     function $(element) {
         return document.querySelector(element);
     }
-
     function getCurrentFormattedTime() {
         const now = new Date();
-
-        const year = now.getFullYear();
-        const month = String(now.getMonth() + 1).padStart(2, '0');
-        const day = String(now.getDate()).padStart(2, '0');
-
-        const hours = String(now.getHours()).padStart(2, '0');
-        const mins = String(now.getMinutes()).padStart(2, '0');
-        const secs = String(now.getSeconds()).padStart(2, '0');
-
-        return `${year}/${month}/${day} ${hours}:${mins}:${secs}`;
+        const p = n => String(n).padStart(2, "0");
+        return now.getFullYear() + "-" + p(now.getMonth() + 1) + "-" + p(now.getDate()) +
+            " " + p(now.getHours()) + ":" + p(now.getMinutes()) + ":" + p(now.getSeconds());
     }
     function AJAX(url, callback) {
         var req = AJAX_init();
         req.onreadystatechange = AJAX_processRequest;
         function AJAX_init() {
-            if (window.XMLHttpRequest) {
-                return new XMLHttpRequest();
-            } else {
-                if (window.ActiveXObject) {
-                    return new ActiveXObject("Microsoft.XMLHTTP");
-                }
-            }
+            if (window.XMLHttpRequest) return new XMLHttpRequest();
+            if (window.ActiveXObject) return new ActiveXObject("Microsoft.XMLHTTP");
         }
         function AJAX_processRequest() {
-            if (req.readyState == 4) {
-                if (req.status == 200) {
-                    if (callback) {
-                        callback(req.responseText);
-                    }
-                }
-            }
+            if (req.readyState == 4 && req.status == 200 && callback) callback(req.responseText);
         }
-        this.doGet = function () {
-            req.open("GET", url, true);
-            req.send(null);
-        };
+        this.doGet = function () { req.open("GET", url, true); req.send(null); };
         this.doPost = function (body) {
             req.open("POST", url, true);
-            req.setRequestHeader(
-                "Content-Type",
-                "application/x-www-form-urlencoded"
-            );
+            req.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
             req.setRequestHeader("ISAJAX", "yes");
             req.send(body);
         };
     }
-
     function clearCookie(name) {
         document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     }
-
     let getDashboardTimer = null;
     function dashboardCallback(req) {
         if (req && req.hwtype) {
-            if (getDashboardTimer) {
-                clearInterval(getDashboardTimer);
-            }
-
+            if (getDashboardTimer) clearInterval(getDashboardTimer);
             let device_name = req.hwtype;
-            if (device_name.indexOf("Nano3s") > 0) {
-                $('.header-name').innerHTML = "Avalon Nano 3S";
-            }
-
-            if (device_name.indexOf("Mini3") > 0) {
-                $('.header-name').innerHTML = "Avalon Mini 3";
-            }
-
+            if (device_name.indexOf("Nano3s") > 0) $(".header-name").innerHTML = "Avalon Nano 3S";
+            if (device_name.indexOf("Mini3") > 0) $(".header-name").innerHTML = "Avalon Mini 3";
             let status = req.sys_status;
+            const pill = $(".status-pill");
+            if (pill && pill.classList) pill.classList.toggle("is-ok", status == "1");
             if (status == "0") {
                 $(".header-status").style.backgroundColor = "#a1aabd";
                 $(".header-status-text").innerHTML = "Init";
@@ -483,21 +179,18 @@
                 $(".header-status").style.backgroundColor = "#a1aabd";
                 $(".header-status-text").innerHTML = "Idle";
             }
+            if (req.mac) $(".macaddress").textContent = req.mac;
+            if (req.version) $(".version").textContent = req.version;
         }
     }
     function logout() {
         let res = confirm("Are you sure you want to sign out?");
         if (res) {
             clearCookie("auth");
-            fetch("/api/v1/session", {method: "DELETE"}).finally(() => {
-                location.href = "login.html";
-            });
+            fetch("/api/v1/session", {method: "DELETE"}).finally(() => { location.href = "login.html"; });
         }
     }
-    function dashboard() {
-        location.href = "dashboard.html";
-    }
-
+    function dashboard() { location.href = "dashboard.html"; }
     const upgradeReason = {
         "0": "The upload ended before the device reached a verdict, and the device reported no error of its own. The running firmware is unchanged: upload again.",
         "-1": "Bad image header",
@@ -509,102 +202,57 @@
         "-7": "The device has already applied an upgrade since it last started, and accepts no further upload until it restarts. Restart it, then check the firmware version before uploading again.",
         "-8": "The device could not write the image to its own flash (erase, write or final flush failed). The running firmware is unchanged: check the device log, then try again."
     };
-
     function failText(msg) {
         const m = /Upgrade (ok|failed)\((-?\d+)\), percent\((\d+)\)/.exec(msg);
-
-        if (!m || m[1] == "ok" || !upgradeReason[m[2]]) {
-            return msg;
-        }
+        if (!m || m[1] == "ok" || !upgradeReason[m[2]]) return msg;
         return `${upgradeReason[m[2]]} (${m[2]}), percent ${m[3]}%`;
     }
-
     function replyMsg(body) {
         let v;
-
-        try {
-            v = JSON.parse(body);
-        } catch (e) {
-            return "";
-        }
+        try { v = JSON.parse(body); } catch (e) { return ""; }
         const st = v && Array.isArray(v.STATUS) ? v.STATUS[0] : null;
         return st && typeof st.Msg === "string" ? st.Msg.trim() : "";
     }
-
     let picked = null;
     let busy = false;
-
-    function setState(text) {
-        $('.upgrade-state').textContent = text;
-    }
-    function setProgress(percent) {
-        $('.progress-fill').style.width = percent + "%";
-    }
-    function pickFile() {
-        if (!busy) {
-            $('.file-input').click();
-        }
-    }
+    function setState(text) { $(".upgrade-state").textContent = text; }
+    function setProgress(percent) { $(".progress-fill").style.width = percent + "%"; }
+    function pickFile() { if (!busy) $(".file-input").click(); }
     function fileChosen(files) {
-        if (!files || !files.length) {
-            return;
-        }
-        if (files.length > 1) {
-            alert("Only one file can be added.");
-            return;
-        }
-        if (!/\.aup$/i.test(files[0].name)) {
-            alert("You can't upload files of this type.");
-            return;
-        }
+        if (!files || !files.length) return;
+        if (files.length > 1) { alert("Only one file can be added."); return; }
+        if (!/\.aup$/i.test(files[0].name)) { alert("You can't upload files of this type."); return; }
         picked = files[0];
-        $('.drop-file').textContent = picked.name;
+        $(".drop-file").textContent = picked.name;
         setProgress(0);
         setState("Ready to upload");
     }
     function dropAreaInit() {
-        const area = $('.drop-area');
-
-        area.addEventListener("dragover", function (e) {
-            e.preventDefault();
-            area.classList.add("dragover");
-        });
-        area.addEventListener("dragleave", function () {
-            area.classList.remove("dragover");
-        });
+        const area = $(".drop-area");
+        area.addEventListener("dragover", function (e) { e.preventDefault(); area.classList.add("dragover"); });
+        area.addEventListener("dragleave", function () { area.classList.remove("dragover"); });
         area.addEventListener("drop", function (e) {
             e.preventDefault();
             area.classList.remove("dragover");
-            if (!busy) {
-                fileChosen(e.dataTransfer.files);
-            }
+            if (!busy) fileChosen(e.dataTransfer.files);
         });
     }
     function uploadEnd(state, text) {
         busy = false;
-        $('.submit').classList.remove("busy");
+        $(".submit").classList.remove("busy");
         setState(state);
-        if (text) {
-            alert(text);
-        }
+        if (text) alert(text);
     }
     function restarting() {
-        $('.mask').style.display = "block";
-        $('.loading').style.display = "flex";
+        $(".mask").style.display = "block";
+        $(".loading").style.display = "flex";
         setTimeout(dashboard, 30000);
     }
     function upload() {
-        if (busy) {
-            return;
-        }
-        if (!picked) {
-            alert("Please choose a software update image file (.aup) first.");
-            return;
-        }
-
+        if (busy) return;
+        if (!picked) { alert("Please choose a software update image file (.aup) first."); return; }
         const form = new FormData();
         form.append("file", picked, picked.name);
-
         const xhr = new XMLHttpRequest();
         xhr.open("POST", "/api/v1/upgrade", true);
         xhr.timeout = 0;
@@ -626,15 +274,13 @@
                 return;
             }
             const msg = replyMsg(xhr.responseText);
-
             if (xhr.status < 200 || xhr.status >= 300 || /Upgrade failed\(/.test(msg)) {
                 uploadEnd("Upgrade failed", failText(msg) || "Upgrade failed");
                 return;
             }
             if (xhr.status == 202) {
                 uploadEnd("Upgrade status not reported", (msg ? msg + ". " : "") +
-                    "Do not upload again: wait for the device to restart, " +
-                    "then check the firmware version.");
+                    "Do not upload again: wait for the device to restart, then check the firmware version.");
                 restarting();
                 return;
             }
@@ -645,33 +291,23 @@
             uploadEnd("Upgrade successful", "Upgrade successful. The device is restarting.");
             restarting();
         };
-        xhr.onerror = function () {
-            uploadEnd("Upgrade failed", "The upload did not reach the device.");
-        };
-
+        xhr.onerror = function () { uploadEnd("Upgrade failed", "The upload did not reach the device."); };
         busy = true;
-        $('.submit').classList.add("busy");
+        $(".submit").classList.add("busy");
         setProgress(0);
         setState("Uploading 0%");
         xhr.send(form);
     }
-
     function updateDashboard() {
-        let oUpdate;
-        oUpdate = new AJAX("/api/v1/dashboard?num=" + Math.random(),
-            function (t) {
-                try {
-                    dashboardCallback(JSON.parse(t))
-                } catch (e) {
-                    console.log("updateDashboard err:" + e.message)
-                }
-            });
+        const oUpdate = new AJAX("/api/v1/dashboard?num=" + Math.random(), function (t) {
+            try { dashboardCallback(JSON.parse(t)); } catch (e) { console.log("updateDashboard err:" + e.message); }
+        });
         oUpdate.doGet();
-        let loadtime = getCurrentFormattedTime();
-        $(".header-load-time").innerHTML = loadtime;
+        $(".header-load-time").innerHTML = getCurrentFormattedTime();
+        if (typeof loadSsid === "function") loadSsid();
     }
-
     dropAreaInit();
-    getDashboardTimer = setInterval(function () { updateDashboard() }, 3000);
+    getDashboardTimer = setInterval(function () { updateDashboard(); }, 3000);
     updateDashboard();
 </script>
+</html>
