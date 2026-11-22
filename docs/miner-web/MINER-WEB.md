@@ -10,7 +10,7 @@ Processes, layers and deployment: [MINER.md](../miner/MINER.md#overview).
 |---|---|
 | `app/miner_web_main.c` | entry: `miner_web [port] [systemcfg.ini]`, plain-HTTP port `80` by default |
 | `web/` | the router, the civetweb glue, firmware and wallpaper upload, tokens, log download, the HTTPS certificate |
-| `assets/` | the pages: `login.html`, `dashboard.html`, `pools.html`, `qr_login.html`, `upgrade.html` |
+| `assets/` | the pages (`login.html`, `dashboard.html`, `pools.html`, `qr_login.html`, `upgrade.html`) and brand logos (`pelish-logo.png`, `canaan-logo.png`) |
 | `third_party/` | `js-sha256` and `qrcodejs`, loaded by the pages |
 | `services/miner-web.init` | starts `miner_web` on port 80 with `/data/userconfig/systemcfg.ini` and restarts it when it exits |
 | `tests/` | host tests: `docs/TESTING.md` |
@@ -50,7 +50,7 @@ builds `ssl` against the OpenSSL 3 API and turns off `caching` and the `civetweb
 - **Origin:** on methods other than `GET`/`HEAD` and on firmware and wallpaper upload, `Origin` (or
   `Referer`), when the request carries one, must name the same host and port as `Host`; otherwise
   `403`. A request with neither passes.
-- **Static files:** only the pages and the two scripts listed in `g_static_files`
+- **Static files:** only the pages, the brand logos and the two scripts listed in `g_static_files`
   (`web/civetweb_glue.c`); any other path answers `404`. A new page goes into that list; a new
   third-party script also into the recipe's `do_install`.
 

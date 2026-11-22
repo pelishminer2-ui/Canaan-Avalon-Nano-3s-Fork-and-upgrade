@@ -53,6 +53,7 @@ do_install() {
     cp -r ${S}/assets/* ${D}${datadir}/miner-web/www/
     cp ${S}/third_party/js-sha256/sha256.min.js ${S}/third_party/qrcodejs/qrcode.min.js \
         ${D}${datadir}/miner-web/www/
+    find ${D}${datadir}/miner-web/www -type f -exec chmod 0644 {} +
 
     install -d ${D}${sysconfdir}/init.d
     install -m 0755 ${S}/services/miner-web.init ${D}${sysconfdir}/init.d/miner-web

@@ -538,6 +538,22 @@ const flush = async () => {
         .includes('WebSocket'));
     assert(/id="password"[^>]*maxlength="64"/.test(
         fs.readFileSync(path.join(__dirname, '../assets/login.html'), 'utf8')));
+
+    const glueSrc = fs.readFileSync(path.join(__dirname, '../web/civetweb_glue.c'), 'utf8');
+    for (const logo of ['pelish-logo.png', 'canaan-logo.png']) {
+        const buf = fs.readFileSync(path.join(__dirname, '../assets', logo));
+        assert(buf.length > 0 && buf.subarray(0, 8).equals(
+            Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])));
+        assert(glueSrc.includes('"/' + logo + '"'));
+    }
+    for (const name of ['dashboard', 'login', 'pools', 'qr_login', 'upgrade']) {
+        const html = fs.readFileSync(path.join(__dirname, '../assets', name + '.html'), 'utf8');
+        assert(html.includes('src="pelish-logo.png"'), name + ' missing pelish-logo.png');
+        assert(html.includes('src="canaan-logo.png"'), name + ' missing canaan-logo.png');
+        assert(html.includes('rel="icon" type="image/png" href="pelish-logo.png"'),
+            name + ' missing favicon');
+        assert(!html.includes('<img src="" alt="">'), name + ' has empty logo img');
+    }
 })().catch(e => {
     console.error(e);
     process.exit(1);

@@ -16,6 +16,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="pelish-logo.png">
     <title>Avalon Device</title>
     <style>
         body {
@@ -33,12 +34,14 @@
         }
 
         .header {
-            height: 72px;
+            min-height: 76px;
             display: flex;
+            flex-wrap: wrap;
+            gap: 12px 24px;
             justify-content: space-between;
             align-items: center;
             margin-top: 20px;
-            padding: 0 30px;
+            padding: 10px 30px;
             box-sizing: border-box;
             color: #060000;
             background-color: #fff;
@@ -47,27 +50,52 @@
 
         .header-left {
             display: flex;
+            flex-wrap: wrap;
+            gap: 8px 0;
             align-items: center;
         }
 
         .header-logo {
-            width: 40px;
-            height: 40px;
-            background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACEAAAAlCAMAAAD7q3BLAAAAAXNSR0IB2cksfwAAAbBQTFRFAAAABgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABBgABaE1nmAAAAJB0Uk5TAAy0b/85A9+rVf0hx5E69BCsduQGklzP92BCBZDAtRkpuJtE+h4xFraYsIArKv7qCJynZRf4JPzWAYIoGKBKCetT9dwcvOKXLtexLKFLyzejjxpN8RSFL2l3bSOD7guirh0T72vhlHgCh9kwWz7nUTizzqnecMRsX9piNdBA1FC7pZNSlowfxRuONsjyiloE+Gc88gAAAl5JREFUeJx90n9IU1EUB/DvyVyzhXO6VpTVIqal5ahJpFnLKIsgMkEikhT/iEZ/FEHMitEPGQ3BLCIRKipRjChBKgy1RlEEkVRWWlmipYVlZcnCWvk6920zN/d2/7i/zuee9857lxDciEZCd0LWUUTeiEJFfycORxQxXkaeSGIKJ4gZiiBif3KnoUFloZOPx35VFBrptxi0NKAkpn7zjfGfFESc5K8ioV9BxP8A9PSZZ4YPYcXM4e/A9N5ZH4EZ78IKA5egn9QjV5zYHU5M+8Ll8jPmvgdmd4UR83oAI3UCSRzVa1+NF/PfAKYOMUt5DSS/GCcWvvSnABZRO1LpSahY/CyQAljSBphbQ0Q6PQ6kAJZSK288CBaZD+UUy+meWK3gaObdIGHliOW5J5uIWnhpkrqR3RwkLE+BjD/EiVYPcod1t4A1N8eIjLhmWHQTmsRcu+wGMOfXANZfHyM2NgIbiHxbWWo+vPkajGn1/8Vat3hSe07fI7HK9TYgv8mDvMujYstV39ukLqB+UUGuimoLLmErVQdEYa2/5oKRKKlGfnOTii6i6Kxf5LV1+z6rWeysTD4vFsV0DlZTlU/YzshgB50WQ1JOlRhSrFSJXSdlsV2qE1vbqiXu99CptFVEJwC1rQJ7y2RhL+eIxubiPjqRbw/yjVTPV8GccBt2J4udnXeAEvd9wHHBlDVUUzS5JV33ltM66Ch2l7MoPQIcvsK3oTi2cfRiobRXbTjENW06QDjmKOxyI0xzdfBHcNopWlJLnnCAWxntd+0jtfN4nwLgP2qpO0iuEsW4aBWV/wAMfKnakr+KLgAAAABJRU5ErkJggg==");
-            background-repeat: no-repeat;
-            background-position: center;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            cursor: pointer;
+        }
+
+        .header-logo .brand-logo-pelish {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            object-fit: contain;
+            filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.14));
+            flex-shrink: 0;
+        }
+
+        .header-logo .brand-logo-divider {
+            width: 1px;
+            height: 28px;
+            background-color: #dcdfe8;
+            flex-shrink: 0;
+        }
+
+        .header-logo .brand-logo-canaan {
+            height: 30px;
+            width: auto;
+            object-fit: contain;
+            flex-shrink: 0;
         }
 
         .header-name {
-            margin-left: 30px;
+            margin-left: 24px;
             height: 40px;
             line-height: 44px;
+            font-weight: 500;
         }
 
         .header-separator {
             border: 1px solid #a0a0a0;
             height: 20px;
-            margin: 0 30px;
+            margin: 0 24px;
         }
 
         .header-status {
@@ -316,8 +344,10 @@
     <div class="container">
         <div class="header">
             <div class="header-left">
-                <div class="header-logo">
-                    <img src="" alt="">
+                <div class="header-logo" onclick="dashboard()">
+                    <img class="brand-logo-pelish" src="pelish-logo.png" alt="Pelish Crypto &amp; More">
+                    <span class="brand-logo-divider" aria-hidden="true"></span>
+                    <img class="brand-logo-canaan" src="canaan-logo.png" alt="Canaan">
                 </div>
                 <div class="header-name">Avalon Device</div>
                 <div class="header-separator"></div>

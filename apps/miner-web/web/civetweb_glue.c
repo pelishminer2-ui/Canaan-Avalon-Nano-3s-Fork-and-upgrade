@@ -96,6 +96,8 @@ static const char *const g_static_files[] = {
     "/upgrade.html",
     "/sha256.min.js",
     "/qrcode.min.js",
+    "/pelish-logo.png",
+    "/canaan-logo.png",
 };
 static const char g_qr_begin_uri[] = "/api/v1/auth";
 static const char g_qr_poll_uri[]  = "/api/v1/qr-login";
