@@ -361,14 +361,27 @@ def draw_check(c, x, y, label):
 def page_cover(c, a):
     background(c)
     footer(c, 1)
-    bookmark(c, 1, "What you will do")
-    c.drawImage(a["pelish"], W - 78, H - 78, 46, 46, mask="auto")
-    text(c, "WHAT YOU WILL DO", 36, 742, "B", 11, GOLD_D)
-    sentence = (
-        "Unplug the Wi-Fi dongle, hold BOOT, write your .kdimg, "
-        "then plug the ethernet dongle into the same hole."
+    bookmark(c, 1, "Embedded mode")
+    c.drawImage(a["pelish"], W - 72, H - 68, 38, 38, mask="auto")
+    text(c, "EMBEDDED MODE", 36, 746, "B", 13, GOLD_D)
+    text(c, "Write this image onto the Nano 3S control board", 36, 722, "B", 14, INK)
+    text(c, "(BOOT + kburn SPI NAND).", 36, 704, "B", 14, INK)
+    para(
+        c,
+        "Same dongle USB hole. Not Wi-Fi OTA from factory. Not a Windows service.",
+        36, 678, 540, "S", 11, MUTED, 14,
     )
-    para(c, sentence, 36, 712, 500, "B", 18, INK, 24)
+    rr(c, 36, 596, 540, 48, 8, fill=RED_S, stroke=RED, sw=1.1)
+    text(
+        c,
+        "This .kdimg does not install on Antminer S19 JPro, KPro, or AM Logic.",
+        48, 624, "B", 9, RED,
+    )
+    text(
+        c,
+        "Those are other Mujina targets. This tree is Nano 3S only.",
+        48, 610, "B", 9, RED,
+    )
 
     panels = [
         (1, "Unplug the dongle", _cover_unplug),
@@ -377,8 +390,8 @@ def page_cover(c, a):
         (4, "Ethernet dongle", _cover_lan),
     ]
     pw, ph = 258, 216
-    gap = 14
-    x0, y0 = 36, 156
+    gap = 12
+    x0, y0 = 36, 140
     for i, (n, cap, fn) in enumerate(panels):
         col, row = i % 2, 1 - (i // 2)
         x = x0 + col * (pw + gap)
@@ -860,12 +873,14 @@ def page_overview(c, a):
 def main():
     assets = load_assets()
     c = canvas.Canvas(STAGING, pagesize=(W, H))
-    c.setTitle("Pelish on your Nano 3s")
+    c.setTitle("Embedded mode: Pelish on Nano 3s")
     c.setAuthor("Pelish")
     c.setCreator("Pelish")
     c.setSubject(
-        "Unplug the Wi-Fi dongle, hold BOOT, write your .kdimg, "
-        "then plug the ethernet dongle into the same hole and open Overview."
+        "EMBEDDED MODE: write this image onto the Nano 3S control board "
+        "(BOOT + kburn SPI NAND). Same dongle USB hole. "
+        "Not Wi-Fi OTA from factory. Not a Windows service. "
+        "Not Antminer S19 JPro, KPro, or AM Logic."
     )
     for fn in (
         page_cover, page_holes, page_file, page_cable,

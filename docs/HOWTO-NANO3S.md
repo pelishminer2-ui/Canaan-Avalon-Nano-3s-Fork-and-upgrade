@@ -1,5 +1,16 @@
 # Nano3s how-to
 
+**Embedded mode.** This fork is on-board firmware for the Avalon Nano 3S control board
+(Canaan K230) only. Yocto Linux and the miner apps are packed into one `.kdimg` and written
+to that board's SPI-NAND with `kburn`. After boot, a USB-RJ45 adapter in the same dongle USB
+hole is the board's USB host. This is not a PC sidecar and not an SSH-only `mm_miner` swap.
+
+**EMBEDDED MODE:** write this image onto the Nano 3S control board (BOOT + kburn SPI NAND).
+Same dongle USB hole. Not Wi-Fi OTA from factory. Not a Windows service.
+
+This `.kdimg` does **not** install on Antminer S19 JPro, KPro, or AM Logic. Those are other
+Mujina targets. This tree is Nano 3S only.
+
 Set up the Nano3s Wi-Fi, set its pools, reboot it and check that it mines. API details:
 [MINER.md](miner/MINER.md#4028-api) and [MINER-WEB.md](miner-web/MINER-WEB.md#rest).
 
@@ -13,8 +24,9 @@ this tree.
 2. `gunzip -k` the `.kdimg.gz`. Keep a copy of that `.kdimg` as the kburn recovery image.
 3. Hold **BOOT** (recessed button) while applying power so the ROM enters Canaan burn mode.
 4. Flash **only this SDK's nano3s `.kdimg`** to **SPI-NAND** with Canaan `kburn -m nand` or the
-   K230 Burning Tool (`Medium` = SPI NAND, image part `all`). Never flash Mujina,
-   nano-mujina, HashPower, or any other vendor `.kdimg`.
+   K230 Burning Tool (`Medium` = SPI NAND, image part `all`). This file does not install on
+   Antminer S19 JPro, KPro, or AM Logic. Never flash Mujina, nano-mujina, HashPower, or any
+   other vendor `.kdimg`.
 5. Do not pull power until the tool reports success. A cut flash is recovered only by kburn
    again, not by OTA and not by Mujina.
 6. After the first successful kburn, later pelish builds are **OTA only**: upload the new `.aup`
@@ -27,6 +39,7 @@ unless **Keep Wi-Fi on with Ethernet** is checked. The Avalon app stays on this 
 
 Mujina / nano-mujina is a **working model** (A/B, conservative clocks, keep a recovery image). It
 is **not** recovery firmware for this board and must not be flashed over factory or this SDK.
+S19 JPro, KPro, and AM Logic are other Mujina targets. They are not this tree.
 
 ## Current limitation
 
