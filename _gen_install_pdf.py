@@ -16,9 +16,10 @@ OUT = r"G:\cyber tools\3s\Nano3s-pelish-install.pdf"
 STAGING = r"G:\cyber tools\3s\_pelish_install_staging.pdf"
 PHOTO = r"G:\cyber tools\3s\Canaan-Avalon-Nano-3s-6TH.png"
 PELISH = r"G:\cyber tools\3s\apps\miner-web\assets\pelish-logo.png"
+CANAAN = r"G:\cyber tools\3s\apps\miner-web\assets\canaan-logo.png"
 
 W, H = 612, 792
-PAGES = 7
+PAGES = 8
 
 pdfmetrics.registerFont(TTFont("S", r"C:\Windows\Fonts\segoeui.ttf"))
 pdfmetrics.registerFont(TTFont("B", r"C:\Windows\Fonts\segoeuib.ttf"))
@@ -69,10 +70,13 @@ def key_near_black(path, thresh=28):
 
 def load_assets():
     photo = Image.open(PHOTO).convert("RGBA").crop((36, 104, 538, 396))
+    canaan = key_near_black(CANAAN)
     return {
         "photo": reader_from(photo),
         "photo_size": photo.size,
         "pelish": reader_from(key_near_black(PELISH)),
+        "canaan": reader_from(canaan),
+        "canaan_size": canaan.size,
     }
 
 
@@ -327,6 +331,29 @@ def mini_num(c, x, y, n):
     c.setFillColor(GOLD)
     c.circle(x, y, 11, fill=1, stroke=0)
     center(c, str(n), x, y - 4, "B", 12, white)
+
+
+def canaan_wh(a, h, max_w=None):
+    iw, ih = a["canaan_size"]
+    w = h * float(iw) / float(ih)
+    if max_w and w > max_w:
+        w = max_w
+        h = w * float(ih) / float(iw)
+    return w, h
+
+
+def draw_theme(c, x, y):
+    """Light is the factory choice. Dark is the other button."""
+    rr(c, x, y, 92, 20, 10, fill=white, stroke=C("cfd3dc"), sw=0.9)
+    c.setFillColor(C("3e4654"))
+    c.roundRect(x + 1, y + 1, 46, 18, 9, fill=1, stroke=0)
+    center(c, "Light", x + 24, y + 6, "B", 8, white)
+    center(c, "Dark", x + 69, y + 6, "S", 8, MUTED)
+
+
+def draw_check(c, x, y, label):
+    rr(c, x, y, 11, 11, 2, fill=white, stroke=C("8d93a0"), sw=1)
+    text(c, label, x + 16, y + 2, "S", 8, INK)
 
 
 # --- cover ----------------------------------------------------------------
@@ -679,13 +706,17 @@ def page_open(c, a):
     text(c, "https://", x + 118, y + 428, "B", 13, GREEN)
     text(c, "IP from the screen", x + 176, y + 428, "B", 13, INK)
 
-    text(c, "user", x + 64, y + 384, "S", 10, MUTED)
-    rr(c, x + 64, y + 348, 200, 28, 6, fill=white, stroke=INK, sw=1)
-    text(c, "admin", x + 76, y + 356, "B", 14, INK)
-    text(c, "password", x + 290, y + 384, "S", 10, MUTED)
-    rr(c, x + 290, y + 348, 200, 28, 6, fill=white, stroke=INK, sw=1)
-    text(c, "admin", x + 302, y + 356, "B", 14, INK)
-    center(c, "admin  /  admin", x + w / 2, y + 312, "B", 16, INK)
+    c.drawImage(a["pelish"], x + 64, y + 366, 42, 42, mask="auto")
+    cw, ch = canaan_wh(a, 22, 150)
+    c.drawImage(a["canaan"], x + 116, y + 376, cw, ch, mask="auto")
+    draw_theme(c, x + w - 148, y + 378)
+
+    text(c, "user", x + 64, y + 346, "S", 10, MUTED)
+    rr(c, x + 64, y + 310, 200, 28, 6, fill=white, stroke=INK, sw=1)
+    text(c, "admin", x + 76, y + 318, "B", 14, INK)
+    text(c, "password", x + 290, y + 346, "S", 10, MUTED)
+    rr(c, x + 290, y + 310, 200, 28, 6, fill=white, stroke=INK, sw=1)
+    text(c, "admin", x + 302, y + 318, "B", 14, INK)
     center(c, "The browser may warn you. Continue.", x + w / 2, y + 286, "S", 10, MUTED)
 
     # later, one quiet strip inside the same picture
@@ -700,10 +731,130 @@ def page_open(c, a):
 
     sentences(c, [
         "From a computer on the same network, open https:// and the IP on the screen.",
-        "Log in with admin and admin.",
-        "Next time, upload a .aup on the Upgrade page.",
-        "If the miner will not start, write this same .kdimg again. Not Mujina.",
+        "Pelish and Canaan are on the login page. Pick Light or Dark.",
+        "Log in with admin and admin. If the browser warns you, continue.",
+        "Next you see Overview. Later updates are a .aup, not Mujina.",
     ], 36, 148, 540, 12.5, 15, 4)
+
+
+# --- step 7 ---------------------------------------------------------------
+
+def page_overview(c, a):
+    step_header(c, 7, "See Overview", 8)
+    x, y, w, h = 32, 188, 548, 470
+    card(c, x, y, w, h, 16, fill=white)
+
+    fx, fy, fw, fh = x + 16, y + 16, w - 32, h - 32
+    c.setFillColor(C("f3f4f6"))
+    c.roundRect(fx, fy, fw, fh, 8, fill=1, stroke=0)
+
+    sw = 148
+    c.setFillColor(C("3e4654"))
+    c.rect(fx, fy, sw, fh, fill=1, stroke=0)
+    plate_h = 100
+    plate_y = fy + fh - plate_h - 8
+    rr(c, fx + 8, plate_y, sw - 16, plate_h, 8, fill=white)
+    c.drawImage(a["pelish"], fx + 14, plate_y + 40, 46, 46, mask="auto")
+    cw, ch = canaan_wh(a, 16, sw - 36)
+    c.drawImage(a["canaan"], fx + 14, plate_y + 12, cw, ch, mask="auto")
+
+    rows = [
+        ("Overview", "active"),
+        ("Configuration", "link"),
+        ("Log", "link"),
+        ("System", "label"),
+        ("Password", "sub"),
+        ("Upgrade", "sub"),
+    ]
+    iy = plate_y - 20
+    for name, kind in rows:
+        if kind == "active":
+            text(c, ">>  " + name, fx + 12, iy, "B", 9, C("f0a030"))
+        elif kind == "label":
+            text(c, name, fx + 12, iy, "S", 8, C("c5c8d0"))
+        elif kind == "sub":
+            text(c, ">>  " + name, fx + 22, iy, "S", 9, white)
+        else:
+            text(c, ">>  " + name, fx + 12, iy, "S", 9, white)
+        iy -= 16
+
+    mx = fx + sw
+    mw = fw - sw
+    th = 48
+    c.setFillColor(white)
+    c.rect(mx, fy + fh - th, mw, th, fill=1, stroke=0)
+    c.setStrokeColor(C("e4e6eb"))
+    c.setLineWidth(0.8)
+    c.line(mx, fy + fh - th, mx + mw, fy + fh - th)
+    c.drawImage(a["pelish"], mx + 8, fy + fh - 42, 34, 34, mask="auto")
+    cw, ch = canaan_wh(a, 16, 120)
+    c.drawImage(a["canaan"], mx + 48, fy + fh - 30, cw, ch, mask="auto")
+    text(c, "Avalon Device", mx + 54 + cw, fy + fh - 28, "B", 9, INK)
+    draw_theme(c, mx + mw - 102, fy + fh - 34)
+
+    check_y = fy + fh - th - 28
+    draw_check(c, mx + 12, check_y, "Pelish logo rotation")
+    draw_check(c, mx + 158, check_y, "Keep Wi-Fi on with Ethernet")
+
+    call_h = 52
+    call_y = fy + 12
+    top_limit = check_y - 14
+    bot_limit = call_y + call_h + 12
+    gap = 8
+    row_h = (top_limit - bot_limit - gap) / 2.0
+    rows_ui = [
+        (bot_limit + row_h + gap, [
+            ("Mining status", "ring"),
+            ("Hash rate", "hash"),
+            ("Current Pool", "pool"),
+        ]),
+        (bot_limit, [
+            ("Power", "power"),
+            ("Fan", "fan"),
+            ("Temperature", "temp"),
+        ]),
+    ]
+    cw_card = (mw - 24 - gap * 2) / 3.0
+    for cy, cards in rows_ui:
+        for i, (title, kind) in enumerate(cards):
+            cx = mx + 12 + i * (cw_card + gap)
+            rr(c, cx, cy, cw_card, row_h, 8, fill=white, stroke=LINE, sw=0.8)
+            text(c, title, cx + 8, cy + row_h - 14, "S", 7.5, MUTED)
+            mid_x = cx + cw_card / 2.0
+            mid_y = cy + row_h / 2.0 - 8
+            if kind == "ring":
+                c.setStrokeColor(GREEN)
+                c.setLineWidth(3.5)
+                c.circle(mid_x, mid_y, 16, fill=0, stroke=1)
+                center(c, "on", mid_x, mid_y - 3, "B", 9, GREEN)
+            elif kind == "hash":
+                center(c, "—", mid_x, mid_y + 2, "B", 16, INK)
+                center(c, "TH/s", mid_x, mid_y - 14, "S", 8, MUTED)
+            elif kind == "pool":
+                center(c, "Address", mid_x, mid_y + 10, "S", 8, MUTED)
+                center(c, "Worker", mid_x, mid_y - 4, "S", 8, MUTED)
+            elif kind == "power":
+                center(c, "— W", mid_x, mid_y - 2, "B", 12, INK)
+            elif kind == "fan":
+                center(c, "— RPM", mid_x, mid_y - 2, "B", 12, INK)
+            else:
+                center(c, "— °C", mid_x, mid_y - 2, "B", 12, INK)
+
+    rr(c, mx + 12, fy + 12, (mw - 32) / 2, 52, 8, fill=GREEN_S, stroke=GREEN, sw=1)
+    center(c, "Later: a .aup", mx + 12 + (mw - 32) / 4, fy + 40, "B", 10, GREEN)
+    center(c, "on Upgrade", mx + 12 + (mw - 32) / 4, fy + 24, "S", 8, GREEN)
+    rx = mx + 20 + (mw - 32) / 2
+    rw = (mw - 32) / 2
+    rr(c, rx, fy + 12, rw, 52, 8, fill=RED_S, stroke=RED, sw=1)
+    center(c, "Do not flash Mujina", rx + rw / 2, fy + 40, "B", 9, RED)
+    center(c, "write the .kdimg again", rx + rw / 2, fy + 24, "S", 8, MUTED)
+
+    sentences(c, [
+        "Both logos stay on the page. Light or Dark is at the top.",
+        "Overview is the Avalon home: hash rate, power, and the pool.",
+        "Pelish logo rotation is off. Wi-Fi stays off with Ethernet until you check it.",
+        "The next file is a .aup on Upgrade. Do not flash Mujina.",
+    ], 36, 168, 540, 12.5, 15, 4)
 
 
 def main():
@@ -714,9 +865,12 @@ def main():
     c.setCreator("Pelish")
     c.setSubject(
         "Unplug the Wi-Fi dongle, hold BOOT, write your .kdimg, "
-        "then plug the ethernet dongle into the same hole."
+        "then plug the ethernet dongle into the same hole and open Overview."
     )
-    for fn in (page_cover, page_holes, page_file, page_cable, page_write, page_lan, page_open):
+    for fn in (
+        page_cover, page_holes, page_file, page_cable,
+        page_write, page_lan, page_open, page_overview,
+    ):
         fn(c, assets)
         c.showPage()
     c.save()
