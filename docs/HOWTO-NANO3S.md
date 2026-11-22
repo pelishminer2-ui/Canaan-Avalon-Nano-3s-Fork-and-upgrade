@@ -3,6 +3,31 @@
 Set up the Nano3s Wi-Fi, set its pools, reboot it and check that it mines. API details:
 [MINER.md](miner/MINER.md#4028-api) and [MINER-WEB.md](miner-web/MINER-WEB.md#rest).
 
+## Factory-first install (stock unit)
+
+A factory Avalon Nano 3s will **reject** this SDK's `.aup` over OTA: the factory image uses a
+different OTA key, `SW`/`HW`, and flash layout. Do not try OTA until the board is already running
+this tree.
+
+1. Build `./build.sh nano3s` and wait for `build/images/*.kdimg.gz` plus the matching `.aup`.
+2. `gunzip -k` the `.kdimg.gz`. Keep a copy of that `.kdimg` as the kburn recovery image.
+3. Hold **BOOT** (recessed button) while applying power so the ROM enters Canaan burn mode.
+4. Flash **only this SDK's nano3s `.kdimg`** to **SPI-NAND** with Canaan `kburn -m nand` or the
+   K230 Burning Tool (`Medium` = SPI NAND, image part `all`). Never flash Mujina,
+   nano-mujina, HashPower, or any other vendor `.kdimg`.
+5. Do not pull power until the tool reports success. A cut flash is recovered only by kburn
+   again, not by OTA and not by Mujina.
+6. After the first successful kburn, later pelish builds are **OTA only**: upload the new `.aup`
+   on the LAN Upgrade page (or `mmupgrade`). The miner writes the inactive A/B slot and reboots
+   into it. Keep the last known-good `.kdimg` for kburn if an OTA slot will not boot.
+
+First-boot network: provision Wi-Fi with the Avalon app over BLE (`TP1`), or plug a USB-to-Cat5
+adapter (hub + Wi-Fi dongle is fine). With Ethernet link and an IPv4 address, Wi-Fi turns off
+unless **Keep Wi-Fi on with Ethernet** is checked. The Avalon app stays on this firmware.
+
+Mujina / nano-mujina is a **working model** (A/B, conservative clocks, keep a recovery image). It
+is **not** recovery firmware for this board and must not be flashed over factory or this SDK.
+
 ## Current limitation
 
 Phone app support is in progress. Wi-Fi setup over BLE works.
