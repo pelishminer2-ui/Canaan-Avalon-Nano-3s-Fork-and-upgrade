@@ -31,8 +31,11 @@ api() { echo -n "{\"command\":\"$1\"}" | nc -w 2 "$IP" 4028 | tr -d '\0'; }
 Press the pinhole button (`TP1` on the board) with a pin to start provisioning, then set the
 Wi-Fi network in the Avalon app over BLE. A USB Wi-Fi dongle, a USB-to-Cat5 Ethernet adapter,
 or a hub with both, can share the USB host port. The miner takes addresses by DHCP on every
-interface that is up; Ethernet is preferred when both are connected. The home screen shows the
-preferred IP, and the round button next to the display (`TP2`) cycles the screens.
+interface that is up. When USB Ethernet has a link and an IPv4 address, Wi-Fi is turned off so
+the radio stays idle; unplug the cable and Wi-Fi comes back. The LAN dashboard checkbox **Keep
+Wi-Fi on with Ethernet** (off by default) keeps both up. The home screen shows the preferred
+IP, and the round button next to the display (`TP2`) cycles the screens. The Avalon app and
+LAN UI stay reachable on the Ethernet IP while Wi-Fi is down.
 
 ## 2. Activate
 

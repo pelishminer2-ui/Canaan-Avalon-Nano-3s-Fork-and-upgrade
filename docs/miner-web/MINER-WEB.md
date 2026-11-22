@@ -133,6 +133,7 @@ they do not take `405` with code 505.
 | `POST` | `/api/v1/pools` (form) |
 | `POST` | `/api/v1/system/reboot` (form) |
 | `GET` / `POST` | `/api/v1/timezone` (`timezone=<IANA name>`) |
+| `GET` / `POST` | `/api/v1/wifi-eth` (`wifi_eth=0` auto-disable Wi-Fi when USB Ethernet has an IPv4 address; `1` keep Wi-Fi up) |
 | `GET` / `POST` | the [REST](#rest) resources |
 | `POST` / `DELETE` | `/api/v1/wallpaper` |
 | `POST` | `/api/v1/upgrade` |
@@ -160,6 +161,10 @@ A method a `/api/v1` route does not take answers `405` with code 505.
   when `core_miner` restarts. With a login the dashboard carries the saved passwords in
   `passwd1`..`passwd3`, read from `mm_miner` over `/tmp/sockcfgwr`, and the Pools page shows them.
 - **Time zone:** `POST` changes the zone only, not the clock.
+- **Wi-Fi with Ethernet:** `GET`/`POST /api/v1/wifi-eth` (login required) reads or writes
+  `[net] wifi_eth` in `systemcfg.ini`. Default `0` takes `wlan0` down when USB Ethernet has an
+  IPv4 address; `1` keeps Wi-Fi up. The dashboard checkbox **Keep Wi-Fi on with Ethernet** posts
+  the form field `wifi_eth`. No extra settings page.
 - **QR login:** the QR code carries a public challenge. The App sends `qr_auth` with
   `<challenge>,<proof>` to `POST /api/v1/qr-auth`, and the page polls `POST /api/v1/qr-login`
   with its private token. A session lasts five minutes and is approved once.

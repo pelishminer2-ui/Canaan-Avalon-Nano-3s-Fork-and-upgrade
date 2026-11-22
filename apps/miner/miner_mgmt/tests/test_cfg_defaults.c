@@ -60,6 +60,9 @@ static const struct cfg_key g_keys[] = {
     { "lcd", "pelish", 0, FEAT_BASE },
     { "audio", "volume", 0, FEAT_BASE },
 #endif
+#if NET_WIRED_ALT
+    { "net", "wifi_eth", 0, FEAT_BASE },
+#endif
 };
 
 static ini_t *g_sys; /* parsed board factory systemcfg.ini */
@@ -134,7 +137,11 @@ int main(void)
             "prod and model are PROD_NAME %s and MODEL %s", PROD_NAME, MODEL);
 #if CAP_LCD
     CHECK(num_is("lcd", "id", UI_SUMMARY) && num_is("lcd", "onoff", 1) &&
-                    num_is("lcd", "pelish", 0) && num_is("audio", "volume", 100),
+                    num_is("lcd", "pelish", 0) && num_is("audio", "volume", 100)
+#if NET_WIRED_ALT
+                            && num_is("net", "wifi_eth", 0)
+#endif
+                    ,
             "[lcd] and [audio] are the display defaults");
 #endif
     ini_free(g_sys);

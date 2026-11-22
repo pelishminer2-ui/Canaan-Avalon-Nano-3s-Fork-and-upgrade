@@ -51,4 +51,14 @@ net_wifi_repair_t net_wifi_repair_pick(int present, int carrier, int has_ip, int
 
 unsigned net_wifi_daemons_pick(int started, int present, int supp_alive, int cli_alive);
 
+int net_wired_has_ipv4(void);
+
+typedef enum {
+    NET_WIFI_ETH_NONE = 0, /* already matches intent */
+    NET_WIFI_ETH_HOLD,     /* USB Ethernet has IPv4: take Wi-Fi down */
+    NET_WIFI_ETH_RELEASE,  /* Ethernet gone or keep-wifi: bring Wi-Fi back */
+} net_wifi_eth_act_t;
+
+net_wifi_eth_act_t net_wifi_eth_act(int eth_ip, int keep_wifi, int held);
+
 #endif /* NET_STATE_H */

@@ -65,6 +65,22 @@ static int net_wired_ipv4(char *ip, size_t cap)
     return -1;
 }
 
+int net_wired_has_ipv4(void)
+{
+    char ip[INET_ADDRSTRLEN];
+
+    return net_wired_ipv4(ip, sizeof ip) == 0;
+}
+
+net_wifi_eth_act_t net_wifi_eth_act(int eth_ip, int keep_wifi, int held)
+{
+    int want_hold = eth_ip && !keep_wifi;
+
+    if (want_hold)
+        return held ? NET_WIFI_ETH_NONE : NET_WIFI_ETH_HOLD;
+    return held ? NET_WIFI_ETH_RELEASE : NET_WIFI_ETH_NONE;
+}
+
 int net_state_ip(char *ip, size_t cap)
 {
     if (ip == NULL || cap < INET_ADDRSTRLEN)

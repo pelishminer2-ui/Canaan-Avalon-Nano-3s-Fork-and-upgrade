@@ -561,6 +561,8 @@ const flush = async () => {
     const dash = fs.readFileSync(path.join(__dirname, '../assets/dashboard.html'), 'utf8');
     assert(dash.includes('id="pelish-rotate"'), 'dashboard missing Pelish rotation checkbox');
     assert(dash.includes('/api/v1/lcd-display'), 'dashboard missing lcd-display API');
+    assert(dash.includes('id="wifi-eth-keep"'), 'dashboard missing keep-Wi-Fi checkbox');
+    assert(dash.includes('/api/v1/wifi-eth'), 'dashboard missing wifi-eth API');
     assert(!dash.includes('Canaan-Avalon-Nano-3s-6TH'), 'dashboard must not use the chassis photo');
 
     function pngAlphaZero(buf) {

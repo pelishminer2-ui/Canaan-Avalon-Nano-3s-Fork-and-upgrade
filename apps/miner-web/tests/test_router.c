@@ -172,6 +172,16 @@ static int tz_set_stub(const char *tz)
     return g_tz_set_ok;
 }
 
+static int g_wifi_eth_set = 1;
+static int g_wifi_eth_val;
+static int wifi_eth_set_stub(int on)
+{
+    if (!g_wifi_eth_set)
+        return 0;
+    g_wifi_eth_val = on ? 1 : 0;
+    return 1;
+}
+
 int core_api_call(const char *cmd, const char *param, char *out, size_t cap)
 {
     g_core_calls++;
@@ -1219,6 +1229,41 @@ int main(void)
         CHECK(r.status == 200 && !strcmp(g_core_cmd, "ascset") &&
                         !strcmp(g_core_param, "0,lcd,1:50"),
                 "POST /api/v1/lcd stock command is unchanged");
+
+        ctx.wifi_eth     = 0;
+        ctx.wifi_eth_set = wifi_eth_set_stub;
+        g_wifi_eth_set   = 1;
+        g_wifi_eth_val   = 0;
+        g_core_calls     = 0;
+        web_request qwg  = { .method = WEB_GET, .path = "/api/v1/wifi-eth" };
+        web_route(&qwg, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 401 && g_core_calls == 0, "GET /api/v1/wifi-eth unauthed -> 401");
+        qwg.auth_cookie = COOKIE;
+        web_route(&qwg, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && strstr(out, "\"wifi_eth\":0") != NULL && g_core_calls == 0,
+                "GET /api/v1/wifi-eth -> 200 default off");
+        ctx.wifi_eth = 1;
+        web_route(&qwg, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && strstr(out, "\"wifi_eth\":1") != NULL,
+                "GET /api/v1/wifi-eth keep-wifi on");
+        web_request qwp = { .method = WEB_POST, .path = "/api/v1/wifi-eth", .body = "wifi_eth=1" };
+        web_route(&qwp, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 401 && g_wifi_eth_val == 0,
+                "POST /api/v1/wifi-eth unauthed -> 401");
+        qwp.auth_cookie = COOKIE;
+        web_route(&qwp, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && strstr(out, "\"wifi_eth\":1") != NULL && g_wifi_eth_val == 1 &&
+                        g_core_calls == 0,
+                "POST /api/v1/wifi-eth wifi_eth=1 -> persist, no ascset");
+        qwp.body = "wifi_eth=0";
+        web_route(&qwp, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && g_wifi_eth_val == 0, "POST /api/v1/wifi-eth wifi_eth=0");
+        qwp.body = "wifi_eth=2";
+        web_route(&qwp, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 400, "POST /api/v1/wifi-eth wifi_eth=2 -> 400");
+        rest(WEB_POST, "/api/v1/wifi-eth", "application/json", "{\"wifi_eth\":1}", NULL, 1, out,
+                sizeof out, &r);
+        CHECK(r.status == 200 && g_wifi_eth_val == 1, "POST /api/v1/wifi-eth JSON 1");
 
         /* unknown REST resource */
         web_request qu = { .method = WEB_GET, .path = "/api/v1/bogus" };

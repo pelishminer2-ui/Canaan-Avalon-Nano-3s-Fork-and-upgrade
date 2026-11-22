@@ -26,6 +26,7 @@
 #include "tlscert.h"
 #include "webstatus.h"
 #include "ini.h"
+#include "ini_file.h"
 #include <civetweb.h>
 #include "upload.h"
 #include <fcntl.h>
@@ -103,7 +104,7 @@ static const char *const g_static_files[] = {
 static const char g_qr_begin_uri[] = "/api/v1/auth";
 static const char g_qr_poll_uri[]  = "/api/v1/qr-login";
 
-static int lcd_pelish_from_cfg(const char *path)
+static int cfg_flag(const char *path, const char *sect, const char *key)
 {
     ini_t      *ini;
     const char *s;
@@ -114,11 +115,35 @@ static int lcd_pelish_from_cfg(const char *path)
     ini = ini_load(path);
     if (!ini)
         return 0;
-    s = ini_get(ini, "lcd", "pelish");
+    s = ini_get(ini, sect, key);
     if (s && s[0] == '1' && s[1] == '\0')
         v = 1;
     ini_free(ini);
     return v;
+}
+
+static int lcd_pelish_from_cfg(const char *path)
+{
+    return cfg_flag(path, "lcd", "pelish");
+}
+
+static int wifi_eth_from_cfg(const char *path)
+{
+    return cfg_flag(path, "net", "wifi_eth");
+}
+
+static int wifi_eth_write_cb(ini_t *ini, void *ctx)
+{
+    return ini_set(ini, "net", "wifi_eth", *(int *)ctx ? "1" : "0");
+}
+
+static int wifi_eth_set_cfg(int on)
+{
+    int v = on ? 1 : 0;
+
+    if (!g_systemcfg)
+        return 0;
+    return ini_file_update(g_systemcfg, wifi_eth_write_cb, &v) == 0;
 }
 
 static void telemetry_refresh_maybe(const char *path)
@@ -493,6 +518,7 @@ static int on_request(struct mg_connection *c, void *cbdata)
     }
     web_ctx ctx    = g_ctx;
     ctx.lcd_pelish = lcd_pelish_from_cfg(g_systemcfg);
+    ctx.wifi_eth   = wifi_eth_from_cfg(g_systemcfg);
     ctx.telemetry  = tel_ok ? &tel.dash : NULL;
     ctx.dna        = tel.dna[0] ? tel.dna : NULL;
     ctx.creds      = have_creds ? &creds : NULL;
@@ -688,8 +714,9 @@ static struct mg_context *web_start(const char *port, const char *systemcfg_ini)
     g_systemcfg     = systemcfg_ini;
     g_ctx.pool_conf = POOL_CONFIG_DEFAULT;
     g_ctx.reboot    = device_reboot;
-    g_ctx.tz_get    = device_tz_get;
-    g_ctx.tz_set    = device_tz_set;
+    g_ctx.tz_get       = device_tz_get;
+    g_ctx.tz_set       = device_tz_set;
+    g_ctx.wifi_eth_set = wifi_eth_set_cfg;
     snprintf(threads, sizeof threads, "%d", WEB_NUM_THREADS);
     snprintf(ports, sizeof ports, "%s,%ss,%sso", port, WEB_HTTPS_PORT, WEB_REST_PORT);
 

@@ -44,5 +44,7 @@ int  wifi_carrier_up(void);
 int  wifi_has_ssid(void);
 void wifi_link_repair_tick(void *ctx, uint64_t now_ms);
 void wifi_cfg_freeze(int on);
+void wifi_eth_hold_set(int hold);
+int  wifi_eth_held(void);
 
 #endif /* WIFI_MGR_H */

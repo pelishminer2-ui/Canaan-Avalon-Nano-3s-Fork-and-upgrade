@@ -190,6 +190,8 @@ static int g_wifi_retry_backoff;
 static int g_rssi_idx[SSID_LIST_CNT_MAX];
 /* 1 while saving WiFi settings is blocked */
 static atomic_int g_wifi_cfg_frozen;
+/* 1 while USB Ethernet has IPv4 and Wi-Fi is held down */
+static atomic_int g_eth_hold;
 /* Serializes wifi_check_service() */
 static pthread_mutex_t g_svc_lock = PTHREAD_MUTEX_INITIALIZER;
 /* CLOCK_MONOTONIC ms of the last wifi_check_service(), 0 before the first */
@@ -248,6 +250,56 @@ static void run_argv(const char *const argv[])
 static void wifi_udhcpc_stop(void)
 {
     net_linux_udhcpc_stop(UDHCPC_PID_FILE);
+}
+
+static int wifi_keep_with_eth(void)
+{
+    ini_t      *ini;
+    const char *s;
+    int         keep = 0;
+
+    ini = ini_load(MC_SYSTEMCFG_DEFAULT);
+    if (!ini)
+        return 0;
+    s = ini_get(ini, "net", "wifi_eth");
+    keep = s && s[0] == '1' && s[1] == '\0';
+    ini_free(ini);
+    return keep;
+}
+
+int wifi_eth_held(void)
+{
+    return atomic_load(&g_eth_hold);
+}
+
+void wifi_eth_hold_set(int hold)
+{
+    const char *argv[6];
+    int         on = hold ? 1 : 0;
+
+    if (atomic_load(&g_eth_hold) == on)
+        return;
+    atomic_store(&g_eth_hold, on);
+    if (on) {
+        wifi_udhcpc_stop();
+        argv[0] = "ip";
+        argv[1] = "link";
+        argv[2] = "set";
+        argv[3] = WIFI_DEV_STA_NAME;
+        argv[4] = "down";
+        argv[5] = NULL;
+        run_argv(argv);
+        applog(LOG_INFO, "WiFi (%s) down: USB Ethernet has an address", WIFI_DEV_STA_NAME);
+        return;
+    }
+    argv[0] = "ip";
+    argv[1] = "link";
+    argv[2] = "set";
+    argv[3] = WIFI_DEV_STA_NAME;
+    argv[4] = "up";
+    argv[5] = NULL;
+    run_argv(argv);
+    applog(LOG_INFO, "WiFi (%s) up: USB Ethernet is gone or keep-wifi is on", WIFI_DEV_STA_NAME);
 }
 
 static int set_wpa_ok_argv(const char *const argv[])
@@ -478,7 +530,8 @@ static int wifi_connect()
     }
 
     wifi_udhcpc_stop();
-    system(UDHCPC_CMD);
+    if (!atomic_load(&g_eth_hold))
+        system(UDHCPC_CMD);
     applog(LOG_INFO, "WiFi connecting to '%s' (security %d, network %d)", pssid->name, pssid->auth,
             id);
     explicit_bzero(&cfg, sizeof(cfg));
@@ -1148,7 +1201,7 @@ static void wifi_check_service(void)
         run_argv(supp_argv);
     }
 
-    if (access(UDHCPC_PID_FILE, F_OK) != 0) {
+    if (!atomic_load(&g_eth_hold) && access(UDHCPC_PID_FILE, F_OK) != 0) {
         system(UDHCPC_CMD);
     }
 
@@ -1181,6 +1234,8 @@ static void wifi_daemon_repair(uint64_t now_ms)
     uint64_t at = atomic_load(&g_svc_at);
     unsigned start;
 
+    if (atomic_load(&g_eth_hold))
+        return;
     if (at && (int64_t)(now_ms - at) < (int64_t)WIFI_DAEMON_RETRY_MS)
         return;
     start = net_wifi_daemons_pick(at != 0, wifi_iface_present(), wifi_supp_alive(),
@@ -1201,7 +1256,7 @@ void wifi_exception(void)
     pthread_mutex_lock(&g_wifi_lock);
     known = g_ssid_info.name[0] || g_ssid_info_config.name[0];
     pthread_mutex_unlock(&g_wifi_lock);
-    if (known) {
+    if (known && !atomic_load(&g_eth_hold)) {
         wifi_udhcpc_stop();
         system(UDHCPC_CMD);
     }
@@ -1248,6 +1303,20 @@ void wifi_link_repair_tick(void *ctx, uint64_t now_ms)
 {
     char ip[INET_ADDRSTRLEN];
     (void)ctx;
+    switch (net_wifi_eth_act(net_wired_has_ipv4(), wifi_keep_with_eth(), wifi_eth_held())) {
+    case NET_WIFI_ETH_HOLD:
+        wifi_eth_hold_set(1);
+        break;
+    case NET_WIFI_ETH_RELEASE:
+        wifi_eth_hold_set(0);
+        break;
+    case NET_WIFI_ETH_NONE:
+        break;
+    }
+    if (wifi_eth_held()) {
+        wifi_udhcpc_stop();
+        return;
+    }
     wifi_daemon_repair(now_ms);
     switch (net_wifi_repair_pick(wifi_iface_present(), wifi_carrier_up(),
             net_iface_ipv4(WIFI_DEV_STA_NAME, ip, sizeof ip) == 0, wifi_udhcpc_alive())) {
