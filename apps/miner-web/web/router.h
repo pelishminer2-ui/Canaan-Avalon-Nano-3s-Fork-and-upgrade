@@ -71,6 +71,9 @@ typedef struct {
     int (*tz_get)(char *out, size_t cap); /* read current zone, 0 ok */
     int (*tz_set)(const char *tz);        /* set zone: 1 ok, 0 refused,
                                              -1 zone not installed */
+    int lcd_pelish;                       /* 1: LAN UI Pelish LCD rotation */
+    int wifi_eth;                         /* 1: keep Wi-Fi up with USB Ethernet */
+    int (*wifi_eth_set)(int on);          /* persist wifi_eth: 1 ok, 0 refused */
 } web_ctx;
 
 int              web_route(const web_request *req, const web_ctx *ctx, char *out, size_t cap,

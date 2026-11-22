@@ -890,6 +890,124 @@ static int rest_route(const web_request *req, const web_ctx *ctx, int token_ok, 
         return reply(resp, 200, CT_JSON, out, cap, "{\"result\":\"ok\"}");
     }
 
+    if (!strcmp(r, "lcd-display")) {
+        if (req->method == WEB_GET) {
+            if (!authed)
+                return rest_refused(resp, 401, r, "not logged in", out, cap, WEB_STATUS_AUTH_CODE,
+                        WEB_STATUS_NO_LOGIN_MSG);
+            jwriter w;
+            jw_init(&w, out, cap);
+            jw_obj_open(&w);
+            jw_kv_raw(&w, "pelish", ctx && ctx->lcd_pelish ? "1" : "0");
+            jw_kv_raw(&w, "rotate_s", "180");
+            jw_obj_close(&w);
+            resp->content_type  = CT_JSON;
+            resp->body_len      = jw_len(&w);
+            return resp->status = 200;
+        }
+        if (req->method != WEB_POST) {
+            op_refused(resp, 405, "LCD display option", "only GET and POST are accepted");
+            return rest_method(resp, out, cap);
+        }
+        if (!authed) {
+            op_refused(resp, 401, "LCD display option", "not logged in");
+            return reply(resp, 401, CT_JSON, out, cap, "{\"error\":\"unauthorized\"}");
+        }
+
+        char        raw[12] = "";
+        int         pelish  = -1;
+        const char *body    = req->body ? req->body : "";
+        if (web_form_get(body, "pelish", raw, sizeof raw) == 1) {
+            if (!strcmp(raw, "1") || !strcasecmp(raw, "on") || !strcasecmp(raw, "true"))
+                pelish = 1;
+            else if (!strcmp(raw, "0") || !strcasecmp(raw, "off") || !strcasecmp(raw, "false"))
+                pelish = 0;
+        } else if (rest_json(req)) {
+            json_value       *jv = json_parse(body);
+            const json_value *pv = json_object_get(jv, "pelish");
+            if (json_is(pv, JSON_NUMBER) && (json_int(pv) == 0 || json_int(pv) == 1))
+                pelish = (int)json_int(pv);
+            json_free(jv);
+        }
+        if (pelish < 0)
+            return reply(resp, 400, CT_JSON, out, cap, "{\"error\":\"invalid_pelish\"}");
+
+        char arg[32];
+        int  status;
+        snprintf(arg, sizeof arg, "0,lcd,5:%d", pelish);
+        status = core_reply("ascset", arg, out, cap, resp);
+        if (status == 200) {
+            jwriter w;
+            jw_init(&w, out, cap);
+            jw_obj_open(&w);
+            jw_kv_str(&w, "result", "ok");
+            jw_kv_raw(&w, "pelish", pelish ? "1" : "0");
+            jw_obj_close(&w);
+            resp->content_type  = CT_JSON;
+            resp->body_len      = jw_len(&w);
+            web_logf(stderr, "INFO", "LCD Pelish rotation set from the web page: %d\n", pelish);
+        } else {
+            web_logf(stderr, "ERR", "LCD Pelish rotation from the web page failed\n");
+        }
+        return resp->status;
+    }
+
+    if (!strcmp(r, "wifi-eth")) {
+        if (req->method == WEB_GET) {
+            if (!authed)
+                return rest_refused(resp, 401, r, "not logged in", out, cap, WEB_STATUS_AUTH_CODE,
+                        WEB_STATUS_NO_LOGIN_MSG);
+            jwriter w;
+            jw_init(&w, out, cap);
+            jw_obj_open(&w);
+            jw_kv_raw(&w, "wifi_eth", ctx && ctx->wifi_eth ? "1" : "0");
+            jw_obj_close(&w);
+            resp->content_type  = CT_JSON;
+            resp->body_len      = jw_len(&w);
+            return resp->status = 200;
+        }
+        if (req->method != WEB_POST) {
+            op_refused(resp, 405, "Wi-Fi with Ethernet option", "only GET and POST are accepted");
+            return rest_method(resp, out, cap);
+        }
+        if (!authed) {
+            op_refused(resp, 401, "Wi-Fi with Ethernet option", "not logged in");
+            return reply(resp, 401, CT_JSON, out, cap, "{\"error\":\"unauthorized\"}");
+        }
+
+        char        raw[12] = "";
+        int         keep    = -1;
+        const char *body    = req->body ? req->body : "";
+        if (web_form_get(body, "wifi_eth", raw, sizeof raw) == 1) {
+            if (!strcmp(raw, "1") || !strcasecmp(raw, "on") || !strcasecmp(raw, "true"))
+                keep = 1;
+            else if (!strcmp(raw, "0") || !strcasecmp(raw, "off") || !strcasecmp(raw, "false"))
+                keep = 0;
+        } else if (rest_json(req)) {
+            json_value       *jv = json_parse(body);
+            const json_value *pv = json_object_get(jv, "wifi_eth");
+            if (json_is(pv, JSON_NUMBER) && (json_int(pv) == 0 || json_int(pv) == 1))
+                keep = (int)json_int(pv);
+            json_free(jv);
+        }
+        if (keep < 0)
+            return reply(resp, 400, CT_JSON, out, cap, "{\"error\":\"invalid_wifi_eth\"}");
+        if (!ctx || !ctx->wifi_eth_set || !ctx->wifi_eth_set(keep)) {
+            web_logf(stderr, "ERR", "Wi-Fi with Ethernet option from the web page failed\n");
+            return reply(resp, 503, CT_JSON, out, cap, "{\"error\":\"wifi_eth_failed\"}");
+        }
+        jwriter w;
+        jw_init(&w, out, cap);
+        jw_obj_open(&w);
+        jw_kv_str(&w, "result", "ok");
+        jw_kv_raw(&w, "wifi_eth", keep ? "1" : "0");
+        jw_obj_close(&w);
+        resp->content_type  = CT_JSON;
+        resp->body_len      = jw_len(&w);
+        web_logf(stderr, "INFO", "Wi-Fi with Ethernet set from the web page: %d\n", keep);
+        return resp->status = 200;
+    }
+
     if (!strcmp(r, "timezone")) {
         if (req->method == WEB_GET) {
             char tz[72] = "";

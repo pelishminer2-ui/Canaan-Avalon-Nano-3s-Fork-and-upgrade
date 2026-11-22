@@ -172,6 +172,16 @@ static int tz_set_stub(const char *tz)
     return g_tz_set_ok;
 }
 
+static int g_wifi_eth_set = 1;
+static int g_wifi_eth_val;
+static int wifi_eth_set_stub(int on)
+{
+    if (!g_wifi_eth_set)
+        return 0;
+    g_wifi_eth_val = on ? 1 : 0;
+    return 1;
+}
+
 int core_api_call(const char *cmd, const char *param, char *out, size_t cap)
 {
     g_core_calls++;
@@ -1178,6 +1188,83 @@ int main(void)
         web_route(&qtd, &ctx, out, sizeof out, &r);
         CHECK(r.status == 405, "DELETE /api/v1/timezone -> 405");
 
+        ctx.lcd_pelish  = 0;
+        g_core_calls    = 0;
+        web_request qlg = { .method = WEB_GET, .path = "/api/v1/lcd-display" };
+        web_route(&qlg, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 401 && g_core_calls == 0, "GET /api/v1/lcd-display unauthed -> 401");
+        qlg.auth_cookie = COOKIE;
+        web_route(&qlg, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && strstr(out, "\"pelish\":0") != NULL &&
+                        strstr(out, "\"rotate_s\":180") != NULL && g_core_calls == 0,
+                "GET /api/v1/lcd-display -> 200 stock-only");
+        ctx.lcd_pelish = 1;
+        web_route(&qlg, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && strstr(out, "\"pelish\":1") != NULL,
+                "GET /api/v1/lcd-display pelish on");
+
+        web_request qlp = { .method = WEB_POST, .path = "/api/v1/lcd-display", .body = "pelish=1" };
+        web_route(&qlp, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 401 && g_core_calls == 0,
+                "POST /api/v1/lcd-display unauthed -> 401, core not called");
+        qlp.auth_cookie = COOKIE;
+        web_route(&qlp, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && strstr(out, "\"pelish\":1") != NULL && g_core_calls == 1 &&
+                        !strcmp(g_core_cmd, "ascset") && !strcmp(g_core_param, "0,lcd,5:1"),
+                "POST /api/v1/lcd-display pelish=1 -> ascset lcd 5:1");
+        qlp.body = "pelish=0";
+        web_route(&qlp, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && !strcmp(g_core_param, "0,lcd,5:0"),
+                "POST /api/v1/lcd-display pelish=0 -> ascset lcd 5:0");
+        qlp.body     = "pelish=2";
+        g_core_calls = 0;
+        web_route(&qlp, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 400 && g_core_calls == 0, "POST /api/v1/lcd-display pelish=2 -> 400");
+        rest(WEB_POST, "/api/v1/lcd-display", "application/json", "{\"pelish\":1}", NULL, 1, out,
+                sizeof out, &r);
+        CHECK(r.status == 200 && !strcmp(g_core_param, "0,lcd,5:1"),
+                "POST /api/v1/lcd-display JSON pelish 1");
+        rest(WEB_POST, "/api/v1/lcd", "application/json",
+                "{\"command\":\"lcd\",\"parameter\":\"1:50\"}", NULL, 1, out, sizeof out, &r);
+        CHECK(r.status == 200 && !strcmp(g_core_cmd, "ascset") &&
+                        !strcmp(g_core_param, "0,lcd,1:50"),
+                "POST /api/v1/lcd stock command is unchanged");
+
+        ctx.wifi_eth     = 0;
+        ctx.wifi_eth_set = wifi_eth_set_stub;
+        g_wifi_eth_set   = 1;
+        g_wifi_eth_val   = 0;
+        g_core_calls     = 0;
+        web_request qwg  = { .method = WEB_GET, .path = "/api/v1/wifi-eth" };
+        web_route(&qwg, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 401 && g_core_calls == 0, "GET /api/v1/wifi-eth unauthed -> 401");
+        qwg.auth_cookie = COOKIE;
+        web_route(&qwg, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && strstr(out, "\"wifi_eth\":0") != NULL && g_core_calls == 0,
+                "GET /api/v1/wifi-eth -> 200 default off");
+        ctx.wifi_eth = 1;
+        web_route(&qwg, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && strstr(out, "\"wifi_eth\":1") != NULL,
+                "GET /api/v1/wifi-eth keep-wifi on");
+        web_request qwp = { .method = WEB_POST, .path = "/api/v1/wifi-eth", .body = "wifi_eth=1" };
+        web_route(&qwp, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 401 && g_wifi_eth_val == 0,
+                "POST /api/v1/wifi-eth unauthed -> 401");
+        qwp.auth_cookie = COOKIE;
+        web_route(&qwp, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && strstr(out, "\"wifi_eth\":1") != NULL && g_wifi_eth_val == 1 &&
+                        g_core_calls == 0,
+                "POST /api/v1/wifi-eth wifi_eth=1 -> persist, no ascset");
+        qwp.body = "wifi_eth=0";
+        web_route(&qwp, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && g_wifi_eth_val == 0, "POST /api/v1/wifi-eth wifi_eth=0");
+        qwp.body = "wifi_eth=2";
+        web_route(&qwp, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 400, "POST /api/v1/wifi-eth wifi_eth=2 -> 400");
+        rest(WEB_POST, "/api/v1/wifi-eth", "application/json", "{\"wifi_eth\":1}", NULL, 1, out,
+                sizeof out, &r);
+        CHECK(r.status == 200 && g_wifi_eth_val == 1, "POST /api/v1/wifi-eth JSON 1");
+
         /* unknown REST resource */
         web_request qu = { .method = WEB_GET, .path = "/api/v1/bogus" };
         web_route(&qu, &ctx, out, sizeof out, &r);
@@ -1762,6 +1849,9 @@ int main(void)
             "] [WARN] test_router: login from the web page refused: device not activated\n",
             "] [INFO] test_router: timezone set from the web page: Asia/Tokyo\n",
             "] [WARN] test_router: setting the timezone from the web page refused: "
+            "not logged in\n",
+            "] [INFO] test_router: LCD Pelish rotation set from the web page: 1\n",
+            "] [WARN] test_router: LCD display option from the web page refused: "
             "not logged in\n",
         };
         static char wl[262144];
