@@ -538,6 +538,68 @@ const flush = async () => {
         .includes('WebSocket'));
     assert(/id="password"[^>]*maxlength="64"/.test(
         fs.readFileSync(path.join(__dirname, '../assets/login.html'), 'utf8')));
+
+    const glueSrc = fs.readFileSync(path.join(__dirname, '../web/civetweb_glue.c'), 'utf8');
+    for (const logo of ['pelish-logo.png', 'canaan-logo.png']) {
+        const buf = fs.readFileSync(path.join(__dirname, '../assets', logo));
+        assert(buf.length > 0 && buf.subarray(0, 8).equals(
+            Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])));
+        assert(glueSrc.includes('"/' + logo + '"'));
+    }
+    for (const name of ['dashboard', 'login', 'pools', 'qr_login', 'upgrade']) {
+        const html = fs.readFileSync(path.join(__dirname, '../assets', name + '.html'), 'utf8');
+        assert(html.includes('src="pelish-logo.png"'), name + ' missing pelish-logo.png');
+        assert(html.includes('src="canaan-logo.png"'), name + ' missing canaan-logo.png');
+        assert(html.includes('rel="icon" type="image/png" href="pelish-logo.png"'),
+            name + ' missing favicon');
+        assert(!html.includes('<img src="" alt="">'), name + ' has empty logo img');
+        assert(html.includes('prefers-color-scheme: dark'), name + ' missing dark-theme logo CSS');
+        assert(html.includes('background-color: transparent'),
+            name + ' logos need transparent backgrounds');
+        assert(!/Canaan-Avalon-Nano-3s|Luxor/i.test(html), name + ' must not show the chassis photo');
+    }
+    const dash = fs.readFileSync(path.join(__dirname, '../assets/dashboard.html'), 'utf8');
+    assert(dash.includes('id="pelish-rotate"'), 'dashboard missing Pelish rotation checkbox');
+    assert(dash.includes('/api/v1/lcd-display'), 'dashboard missing lcd-display API');
+    assert(dash.includes('id="wifi-eth-keep"'), 'dashboard missing keep-Wi-Fi checkbox');
+    assert(dash.includes('/api/v1/wifi-eth'), 'dashboard missing wifi-eth API');
+    assert(!dash.includes('Canaan-Avalon-Nano-3s-6TH'), 'dashboard must not use the chassis photo');
+
+    function pngAlphaZero(buf) {
+        assert(buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])));
+        let off = 8;
+        while (off + 12 <= buf.length) {
+            const len = buf.readUInt32BE(off);
+            const typ = buf.toString('ascii', off + 4, off + 8);
+            if (typ === 'IHDR') {
+                const color = buf[off + 8 + 9];
+                assert(color === 6, 'logo must be RGBA PNG');
+            }
+            if (typ === 'IEND')
+                break;
+            off += 12 + len;
+        }
+    }
+    for (const logo of ['pelish-logo.png', 'canaan-logo.png']) {
+        const buf = fs.readFileSync(path.join(__dirname, '../assets', logo));
+        pngAlphaZero(buf);
+        assert(buf.includes(Buffer.from('IEND')), logo + ' truncated');
+    }
+    const lcdPelish = path.join(__dirname,
+        '../../../product/k230/miner/avalon-home/nano3s/files/lcd_img/screen_pic/pelish.png');
+    const lcdBuf = fs.readFileSync(lcdPelish);
+    pngAlphaZero(lcdBuf);
+    const lcdDir = path.join(__dirname, '../../../product/k230/miner/avalon-home/nano3s/files/lcd_img');
+    const walk = dir => {
+        for (const name of fs.readdirSync(dir)) {
+            const p = path.join(dir, name);
+            if (fs.statSync(p).isDirectory())
+                walk(p);
+            else
+                assert(!/Canaan-Avalon-Nano-3s|Luxor/i.test(name), 'chassis photo in LCD assets');
+        }
+    };
+    walk(lcdDir);
 })().catch(e => {
     console.error(e);
     process.exit(1);

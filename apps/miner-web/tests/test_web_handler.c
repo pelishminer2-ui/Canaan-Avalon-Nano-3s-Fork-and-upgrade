@@ -902,8 +902,16 @@ int main(void)
         "/pools.html",
         "/qr_login.html",
         "/upgrade.html",
+        "/network.html",
+        "/log.html",
+        "/password.html",
+        "/reset.html",
+        "/chrome.css",
+        "/chrome.js",
         "/sha256.min.js",
         "/qrcode.min.js",
+        "/pelish-logo.png",
+        "/canaan-logo.png",
     };
     static const char *const hidden[] = {
         "/THIRD-PARTY.md",
@@ -1067,8 +1075,9 @@ int main(void)
         static const char *const rest[]  = { "/api/v1/summary", "/api/v1/token", "/api/v1/upgrade",
              "/api/v1/wallpaper" };
         static const char *const other[] = { "/", "/login.html", "/dashboard.html",
-            "/sha256.min.js", "/get_dashboard.cgi", "/cgi-bin/x", "/runlog", "/upload", "/ws",
-            "/api/v1", "/API/V1/summary", "/no-such-route" };
+            "/sha256.min.js", "/pelish-logo.png", "/canaan-logo.png", "/get_dashboard.cgi",
+            "/cgi-bin/x", "/runlog", "/upload", "/ws", "/api/v1", "/API/V1/summary",
+            "/no-such-route" };
 
         req = (stub_req){ .method = "GET",
             .content_length       = -1,
