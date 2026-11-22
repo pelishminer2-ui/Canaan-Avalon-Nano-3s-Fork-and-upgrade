@@ -23,4 +23,11 @@ void  wired_link_set_up(void);
 void  wired_dhcp_start(void);
 void  wired_dhcp_stop(const char *static_dns);
 
+int   wired_iface_link_up(const char *iface);
+pid_t wired_iface_dhcp_pid(const char *iface);
+int   wired_iface_flags(const char *iface, unsigned *out);
+void  wired_iface_link_set_up(const char *iface);
+void  wired_iface_dhcp_start(const char *iface);
+void  wired_iface_dhcp_stop(const char *iface, const char *static_dns);
+
 #endif /* NET_WIRED_ALT_H */

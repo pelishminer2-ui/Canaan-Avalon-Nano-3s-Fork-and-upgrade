@@ -58,6 +58,19 @@ int main(void)
             "never started yet: provisioning starts them, not the repair");
     CHECK(net_wifi_daemons_pick(1, 0, 0, 0) == 0, "dongle gone: no daemon can bind wlan0");
 
+    CHECK(net_wifi_eth_act(0, 0, 0) == NET_WIFI_ETH_NONE,
+            "no Ethernet: leave Wi-Fi running");
+    CHECK(net_wifi_eth_act(1, 0, 0) == NET_WIFI_ETH_HOLD,
+            "USB Ethernet has IPv4: take Wi-Fi down");
+    CHECK(net_wifi_eth_act(1, 0, 1) == NET_WIFI_ETH_NONE,
+            "already held while Ethernet is up: do not toggle");
+    CHECK(net_wifi_eth_act(0, 0, 1) == NET_WIFI_ETH_RELEASE,
+            "Ethernet gone: bring Wi-Fi back");
+    CHECK(net_wifi_eth_act(1, 1, 0) == NET_WIFI_ETH_NONE,
+            "keep-wifi checkbox: stay on Ethernet and Wi-Fi together");
+    CHECK(net_wifi_eth_act(1, 1, 1) == NET_WIFI_ETH_RELEASE,
+            "keep-wifi while held: restore Wi-Fi");
+
     printf(fails ? "FAILED (%d)\n" : "OK\n", fails);
     return fails ? 1 : 0;
 }

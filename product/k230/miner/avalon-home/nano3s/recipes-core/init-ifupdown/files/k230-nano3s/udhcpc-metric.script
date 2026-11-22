@@ -1,0 +1,79 @@
+#!/bin/sh
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026, Canaan Creative Co., Ltd.
+#
+# For the licensing terms, see the LICENSE file (MIT License).
+#
+# NO WARRANTY. The Software is provided "AS IS", without warranty of any kind, express or
+# implied, including but not limited to the warranties of merchantability, fitness for a
+# particular purpose and non-infringement. In no event shall the authors or copyright
+# holders be liable for any claim, damages or other liability arising from, out of or in
+# connection with the Software or the use or other dealings in the Software.
+
+# udhcpc event script: apply the lease, then prefer USB Ethernet (eth0/usb0)
+# over wlan0 via default-route metrics. Both interfaces may be up at once.
+
+[ -z "$1" ] && exit 1
+
+RESOLV_CONF="/etc/resolv.conf"
+[ -n "$broadcast" ] && BROADCAST="broadcast $broadcast"
+[ -n "$subnet" ] && NETMASK="netmask $subnet"
+
+route_metric() {
+    case "$interface" in
+        eth*|usb*|en*) echo 100 ;;
+        wlan*|mlan*|wl*) echo 200 ;;
+        *) echo 150 ;;
+    esac
+}
+
+apply_default_routes() {
+    metric="$(route_metric)"
+    while ip -4 route del default dev "$interface" 2>/dev/null; do
+        :
+    done
+    if [ -n "$router" ]; then
+        for gw in $router; do
+            ip -4 route add default via "$gw" dev "$interface" metric "$metric" 2>/dev/null || \
+                route add default gw "$gw" dev "$interface" metric "$metric" 2>/dev/null || true
+        done
+    fi
+}
+
+write_resolv() {
+    if [ -n "$dns" ]; then
+        {
+            if [ -n "$domain" ]; then
+                echo "search $domain"
+            fi
+            for ns in $dns; do
+                echo "nameserver $ns"
+            done
+        } > "$RESOLV_CONF"
+    fi
+}
+
+maybe_chronyd() {
+    if [ "$(date +%s)" -lt 1000000000 ] && [ -x /etc/init.d/chronyd ]; then
+        /etc/init.d/chronyd restart >/dev/null 2>&1 || true
+    fi
+}
+
+case "$1" in
+    deconfig)
+        ifconfig "$interface" 0.0.0.0
+        ;;
+    bound|renew)
+        # shellcheck disable=SC2086
+        ifconfig "$interface" "$ip" $BROADCAST $NETMASK
+        apply_default_routes
+        write_resolv
+        if [ "$1" = "bound" ]; then
+            maybe_chronyd
+        fi
+        ;;
+    nak)
+        ;;
+esac
+
+exit 0

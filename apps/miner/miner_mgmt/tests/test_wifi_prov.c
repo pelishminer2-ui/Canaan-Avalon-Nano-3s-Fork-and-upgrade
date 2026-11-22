@@ -35,7 +35,8 @@
 #define EV_MAX 16  /* Capacity of tst_cmd[], commands */
 #define EV_LEN 256 /* Size of one tst_cmd[] entry, bytes */
 /* DHCP client restart command wifi_mgr.c issues for wlan0 */
-#define UDHCPC_RESTART "udhcpc -i wlan0 -b -T 1 -A 2 -p /var/run/udhcpc.wlan0.pid &"
+#define UDHCPC_RESTART \
+    "udhcpc -i wlan0 -b -T 1 -A 2 -s /etc/network/udhcpc-metric.script -p /var/run/udhcpc.wlan0.pid &"
 /* Three CJK characters in wpa_cli \x escapes: 9 octets, 36 characters */
 #define SSID_CN  "\\xe4\\xb8\\xad\\xe6\\x96\\x87\\xe5\\xad\\x97"
 #define SSID_CN3 SSID_CN SSID_CN SSID_CN /* SSID_CN three times: 27 octets */

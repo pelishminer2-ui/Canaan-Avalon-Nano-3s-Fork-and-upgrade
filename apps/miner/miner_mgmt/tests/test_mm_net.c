@@ -73,7 +73,8 @@
  * Expected shell commands: start udhcpc, clear the address, drop the default
  * route, query wpa_supplicant.
  */
-#define NET_UDHCPC_START "udhcpc -i " MM_NET_IFACE " -b -T 1 -A 2 -p " NET_INIT_PIDFILE
+#define NET_UDHCPC_START \
+    "udhcpc -i " MM_NET_IFACE " -b -T 1 -A 2 -s " NET_UDHCPC_SCRIPT " -p " NET_INIT_PIDFILE
 #define NET_ADDR_ZERO    "ifconfig " MM_NET_IFACE " 0.0.0.0"
 #define NET_ROUTE_DEL    "route del default 2>/dev/null"
 #define NET_WPA_PROBE    "wpa_cli -i " MM_NET_IFACE " status 2>/dev/null"
@@ -834,9 +835,16 @@ int main(void)
                 MM_NET_IFACE);
     else
         CHECK(!strcmp(MM_NET_IFACE, "wlan0"),
-                "6.1 nano3s' interface is wlan0 — WiFi-only, no wired NIC, L2 owned "
-                "by wpa_supplicant (wifi_mgr.c) (got \"%s\")",
+                "6.1 nano3s' primary interface is wlan0 — L2 owned by "
+                "wpa_supplicant (wifi_mgr.c); USB Ethernet is NET_WIRED_ALT "
+                "(got \"%s\")",
                 MM_NET_IFACE);
+#ifdef NET_USB_IFACE
+        CHECK(!strcmp(NET_WIRED_IFACE, "eth0") && !strcmp(NET_USB_IFACE, "usb0"),
+                "6.1a USB Ethernet names are eth0 (ASIX/RTL/SMSC) and usb0 "
+                "(CDC/RNDIS) (got %s / %s)",
+                NET_WIRED_IFACE, NET_USB_IFACE);
+#endif
 
     {
         int named = 0, foreign = 0, total = 0;

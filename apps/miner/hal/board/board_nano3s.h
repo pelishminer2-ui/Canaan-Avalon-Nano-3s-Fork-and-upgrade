@@ -23,7 +23,7 @@
 #define CAP_BUTTON     1
 #define CAP_BEEP       1
 #define CAP_ACTIVATION 1
-#define NET_WIRED_ALT  1 /* 1 when a wired USB dongle may replace the WiFi one */
+#define NET_WIRED_ALT  1 /* 1 when a USB hub may carry WiFi and USB Ethernet together */
 /* 1 when the power supply is a PD input with a DC-DC core rail */
 #define IMPL_PSU_IS_DCDC_PD        1
 #define PD_POWER_RESERVE_W         3u /* power held back from the PD input limit, W */
@@ -82,7 +82,8 @@
 #define I2C_POWER_E2P_DEV        "/dev/i2c-3" /* DC-DC and hashboard EEPROM I2C bus device path */
 #define SCAN_CADENCE_MS          (30)         /* nonce scan sleep, ms */
 #define MM_NET_IFACE             "wlan0"
-#define NET_WIRED_IFACE          "eth0"   /* wired dongle interface name */
+#define NET_WIRED_IFACE          "eth0" /* ASIX/RTL/SMSC USB Ethernet */
+#define NET_USB_IFACE            "usb0" /* CDC-ECM/NCM/EEM and RNDIS */
 #define DEVNAME_PRE              "nan3s_" /* LAN and BLE device name prefix */
 /* clang-format off */
 /* fan rows: BOARD_FAN_ROW(PWM pad, tachometer device path, pulses per revolution) */

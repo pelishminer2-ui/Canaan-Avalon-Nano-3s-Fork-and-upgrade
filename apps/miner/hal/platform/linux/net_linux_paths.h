@@ -18,6 +18,10 @@
 #define MM_SYS_NET_DIR        "/sys/class/net/"
 #define NET_DHCP_PIDF(ifname) "/var/run/udhcpc." ifname ".pid"
 #define WIRED_DHCP_PIDF       NET_DHCP_PIDF(NET_WIRED_IFACE)
-#define MAIN_DHCP_PIDF        NET_DHCP_PIDF(MM_NET_IFACE)
+#ifdef NET_USB_IFACE
+#define USB_DHCP_PIDF NET_DHCP_PIDF(NET_USB_IFACE)
+#endif
+#define MAIN_DHCP_PIDF NET_DHCP_PIDF(MM_NET_IFACE)
+#define NET_UDHCPC_SCRIPT "/etc/network/udhcpc-metric.script"
 
 #endif /* NET_LINUX_PATHS_H */
