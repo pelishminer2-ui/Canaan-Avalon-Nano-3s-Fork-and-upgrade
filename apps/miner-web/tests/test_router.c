@@ -1206,7 +1206,8 @@ int main(void)
         web_route(&qlp, &ctx, out, sizeof out, &r);
         CHECK(r.status == 200 && !strcmp(g_core_param, "0,lcd,5:0"),
                 "POST /api/v1/lcd-display pelish=0 -> ascset lcd 5:0");
-        qlp.body = "pelish=2";
+        qlp.body     = "pelish=2";
+        g_core_calls = 0;
         web_route(&qlp, &ctx, out, sizeof out, &r);
         CHECK(r.status == 400 && g_core_calls == 0, "POST /api/v1/lcd-display pelish=2 -> 400");
         rest(WEB_POST, "/api/v1/lcd-display", "application/json", "{\"pelish\":1}", NULL, 1, out,

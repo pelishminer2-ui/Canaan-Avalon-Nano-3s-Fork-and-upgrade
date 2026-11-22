@@ -584,10 +584,10 @@ const flush = async () => {
         assert(buf.includes(Buffer.from('IEND')), logo + ' truncated');
     }
     const lcdPelish = path.join(__dirname,
-        '../../product/k230/miner/avalon-home/nano3s/files/lcd_img/screen_pic/pelish.png');
+        '../../../product/k230/miner/avalon-home/nano3s/files/lcd_img/screen_pic/pelish.png');
     const lcdBuf = fs.readFileSync(lcdPelish);
     pngAlphaZero(lcdBuf);
-    const lcdDir = path.join(__dirname, '../../product/k230/miner/avalon-home/nano3s/files/lcd_img');
+    const lcdDir = path.join(__dirname, '../../../product/k230/miner/avalon-home/nano3s/files/lcd_img');
     const walk = dir => {
         for (const name of fs.readdirSync(dir)) {
             const p = path.join(dir, name);
