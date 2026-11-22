@@ -40,9 +40,13 @@
 #if NET_WIRED_ALT
 /*
  * Wired link and udhcpc state seen by the last mm_net_wired_rule (main loop);
- * read by mm_net_devtype without a lock.
+ * read by mm_net_devtype without a lock. g_wired is eth0 (host tests read it);
+ * CDC/RNDIS usb0 is tracked separately so both can hold leases at once.
  */
 static net_select_t g_wired;
+#ifdef NET_USB_IFACE
+static net_select_t g_usb_wired;
+#endif /* NET_USB_IFACE */
 #endif /* NET_WIRED_ALT */
 
 void mm_dev_name(char *out, size_t n)
@@ -63,6 +67,9 @@ void mm_dev_name(char *out, size_t n)
             MM_NET_IFACE,
 #if NET_WIRED_ALT
             NET_WIRED_IFACE,
+#ifdef NET_USB_IFACE
+            NET_USB_IFACE,
+#endif /* NET_USB_IFACE */
 #endif /* NET_WIRED_ALT */
         };
         char mac[5];
@@ -115,46 +122,68 @@ void mm_net_ip_show_rule(void *ctx, uint64_t now_ms)
 }
 
 #if NET_WIRED_ALT
-static void wired_link_ensure_up(void)
+static void wired_link_ensure_up_if(const char *iface)
 {
-    static fault_report_t st;
+    static fault_report_t st_eth;
+#ifdef NET_USB_IFACE
+    static fault_report_t st_usb;
+#endif
     unsigned              flags = 0;
-    if (wired_flags(&flags) != 0)
+    fault_report_t       *st    = &st_eth;
+
+#ifdef NET_USB_IFACE
+    if (!strcmp(iface, NET_USB_IFACE))
+        st = &st_usb;
+#endif
+    if (wired_iface_flags(iface, &flags) != 0)
         return;
     uint32_t             down = !(flags & WIRED_IFF_UP);
-    fault_report_verdict v    = fault_report_step(&st, down);
+    fault_report_verdict v    = fault_report_step(st, down);
     if (!down)
         return;
-    wired_link_set_up();
+    wired_iface_link_set_up(iface);
     if (v != FAULT_REPORT_NONE)
-        osif_log(OSIF_LOG_INFO, "Wired port %s was down; brought it up", NET_WIRED_IFACE);
+        osif_log(OSIF_LOG_INFO, "Wired port %s was down; brought it up", iface);
+}
+
+static void wired_poll_if(const char *iface, net_select_t *st)
+{
+    int was_up = st->link;
+
+    wired_link_ensure_up_if(iface);
+    switch (net_select_eval(st, wired_iface_link_up(iface), wired_iface_dhcp_pid(iface) > 0)) {
+    case NET_SEL_DHCP_START:
+        wired_iface_dhcp_start(iface);
+        break;
+    case NET_SEL_DHCP_STOP:
+        wired_iface_dhcp_stop(iface, NULL);
+        break;
+    case NET_SEL_NONE:
+        if (was_up && !st->link)
+            wired_iface_dhcp_stop(iface, NULL);
+        break;
+    }
 }
 
 void mm_net_wired_rule(void *ctx, uint64_t now_ms)
 {
-    int was_up = g_wired.link;
-
     (void)ctx;
     (void)now_ms;
-    wired_link_ensure_up();
-    switch (net_select_eval(&g_wired, wired_link_up(), wired_dhcp_pid() > 0)) {
-    case NET_SEL_DHCP_START:
-        wired_dhcp_start();
-        break;
-    case NET_SEL_DHCP_STOP:
-        wired_dhcp_stop(NULL);
-        break;
-    case NET_SEL_NONE:
-        if (was_up && !g_wired.link)
-            wired_dhcp_stop(NULL);
-        break;
-    }
+    wired_poll_if(NET_WIRED_IFACE, &g_wired);
+#ifdef NET_USB_IFACE
+    if (strcmp(NET_USB_IFACE, NET_WIRED_IFACE) != 0)
+        wired_poll_if(NET_USB_IFACE, &g_usb_wired);
+#endif
 }
 
 int mm_net_devtype(void)
 {
     if (net_select_wired_up(&g_wired))
         return MM_NET_DEV_WIRED;
+#ifdef NET_USB_IFACE
+    if (net_select_wired_up(&g_usb_wired))
+        return MM_NET_DEV_WIRED;
+#endif
     return IMPL_NET_IS_WIFI ? MM_NET_DEV_WIFI : MM_NET_DEV_WIRED;
 }
 #else  /* NET_WIRED_ALT */
@@ -176,6 +205,10 @@ int mm_net_present(void)
 #if NET_WIRED_ALT
     if (access(MM_SYS_NET_DIR NET_WIRED_IFACE, F_OK) == 0)
         return 1;
+#ifdef NET_USB_IFACE
+    if (access(MM_SYS_NET_DIR NET_USB_IFACE, F_OK) == 0)
+        return 1;
+#endif /* NET_USB_IFACE */
 #endif /* NET_WIRED_ALT */
     return 0;
 }
@@ -183,7 +216,13 @@ int mm_net_present(void)
 int mm_net_wired_present(void)
 {
 #if NET_WIRED_ALT
-    return access(MM_SYS_NET_DIR NET_WIRED_IFACE, F_OK) == 0;
+    if (access(MM_SYS_NET_DIR NET_WIRED_IFACE, F_OK) == 0)
+        return 1;
+#ifdef NET_USB_IFACE
+    if (access(MM_SYS_NET_DIR NET_USB_IFACE, F_OK) == 0)
+        return 1;
+#endif /* NET_USB_IFACE */
+    return 0;
 #else  /* NET_WIRED_ALT */
     return 0;
 #endif /* NET_WIRED_ALT */

@@ -25,7 +25,7 @@ if [ "$CMD" = "CONNECTED" ]; then
     if [ -f "$PIDF" ] && kill -0 "$(cat "$PIDF")" 2>/dev/null; then
         kill -USR1 "$(cat "$PIDF")"
     else
-        udhcpc -i "$IFNAME" -b -T 1 -A 2 -p "$PIDF"
+        udhcpc -i "$IFNAME" -b -T 1 -A 2 -s /etc/network/udhcpc-metric.script -p "$PIDF"
     fi
 fi
 if [ "$CMD" = "DISCONNECTED" ]; then

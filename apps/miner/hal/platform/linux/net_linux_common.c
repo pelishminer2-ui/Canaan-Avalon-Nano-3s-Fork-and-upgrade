@@ -38,7 +38,7 @@ int net_linux_dhcp(void)
 {
     net_linux_udhcpc_stop(MAIN_DHCP_PIDF);
     net_linux_sh("ifconfig " MM_NET_IFACE " 0.0.0.0");
-    net_linux_sh("udhcpc -i " MM_NET_IFACE " -b -T 1 -A 2 -p " MAIN_DHCP_PIDF);
+    net_linux_sh("udhcpc -i " MM_NET_IFACE " -b -T 1 -A 2 -s " NET_UDHCPC_SCRIPT " -p " MAIN_DHCP_PIDF);
     return 0;
 }
 

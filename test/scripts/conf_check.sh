@@ -331,4 +331,32 @@ for f in json.load(open(sys.argv[1]))["files"]:
     fi
 done < <(find "$SDK_ROOT/product" -name aup-ota.json | sort)
 
+nano3s_usbnet_reason() {
+    local cfg="$SDK_ROOT/product/k230/miner/avalon-home/nano3s/recipes-kernel/linux/files/canaan-nano3s.cfg"
+    local k
+    if [[ ! -f "$cfg" ]]; then
+        echo "missing $cfg"
+        return
+    fi
+    for k in CONFIG_USB_USBNET CONFIG_MII CONFIG_PHYLIB CONFIG_USB_NET_CDCETHER \
+            CONFIG_USB_NET_CDC_NCM CONFIG_USB_NET_CDC_EEM CONFIG_USB_NET_RNDIS_HOST \
+            CONFIG_USB_NET_AX8817X CONFIG_USB_NET_AX88179_178A CONFIG_USB_RTL8152 \
+            CONFIG_USB_RTL8150 CONFIG_USB_NET_SMSC95XX CONFIG_USB_NET_SMSC75XX \
+            CONFIG_USB_LAN78XX CONFIG_USB_NET_DM9601 CONFIG_USB_NET_PLUSB \
+            CONFIG_USB_DWC2; do
+        if ! grep -qE "^${k}=y" "$cfg"; then
+            echo "$k is not =y in canaan-nano3s.cfg"
+            return
+        fi
+    done
+}
+
+why="$(nano3s_usbnet_reason)"
+if [[ -z "$why" ]]; then
+    assert_pass "nano3s kernel cfg enables USB Ethernet class and chipset drivers"
+else
+    assert_fail "nano3s kernel cfg must enable USB Ethernet (CDC/RNDIS/ASIX/RTL/SMSC/LAN78xx)" \
+        "$why — a USB-to-Cat5 adapter on the host port would not enumerate"
+fi
+
 tap_done

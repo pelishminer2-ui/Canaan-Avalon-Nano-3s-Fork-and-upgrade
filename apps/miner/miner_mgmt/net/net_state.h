@@ -21,8 +21,9 @@
 
 /*
  * Network state for every consumer (LCD, UDP discovery, summary screen), so
- * all of them agree on whether the box is online. The USB net port may carry
- * a wifi or a wired dongle, so the transport is decided at runtime.
+ * all of them agree on whether the box is online. The USB host may carry a
+ * WiFi dongle, a USB Ethernet adapter, or both on a hub; IPv4 prefers
+ * eth0/usb0 then falls back to wlan0.
  */
 
 int net_state_ip(char *ip, size_t cap);
@@ -49,5 +50,15 @@ typedef enum {
 net_wifi_repair_t net_wifi_repair_pick(int present, int carrier, int has_ip, int udhcpc_alive);
 
 unsigned net_wifi_daemons_pick(int started, int present, int supp_alive, int cli_alive);
+
+int net_wired_has_ipv4(void);
+
+typedef enum {
+    NET_WIFI_ETH_NONE = 0, /* already matches intent */
+    NET_WIFI_ETH_HOLD,     /* USB Ethernet has IPv4: take Wi-Fi down */
+    NET_WIFI_ETH_RELEASE,  /* Ethernet gone or keep-wifi: bring Wi-Fi back */
+} net_wifi_eth_act_t;
+
+net_wifi_eth_act_t net_wifi_eth_act(int eth_ip, int keep_wifi, int held);
 
 #endif /* NET_STATE_H */
