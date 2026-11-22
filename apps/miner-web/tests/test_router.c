@@ -1804,6 +1804,9 @@ int main(void)
             "] [INFO] test_router: timezone set from the web page: Asia/Tokyo\n",
             "] [WARN] test_router: setting the timezone from the web page refused: "
             "not logged in\n",
+            "] [INFO] test_router: LCD Pelish rotation set from the web page: 1\n",
+            "] [WARN] test_router: LCD display option from the web page refused: "
+            "not logged in\n",
         };
         static char wl[262144];
         size_t      wn = slurp(MINER_WEB_LOG_PATH, wl, sizeof wl - 1);
