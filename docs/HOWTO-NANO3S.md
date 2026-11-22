@@ -29,8 +29,10 @@ api() { echo -n "{\"command\":\"$1\"}" | nc -w 2 "$IP" 4028 | tr -d '\0'; }
 ## 1. Set up Wi-Fi
 
 Press the pinhole button (`TP1` on the board) with a pin to start provisioning, then set the
-Wi-Fi network in the Avalon app over BLE. The miner takes its address by DHCP; the home screen
-shows the IP, and the round button next to the display (`TP2`) cycles the screens.
+Wi-Fi network in the Avalon app over BLE. A USB Wi-Fi dongle, a USB-to-Cat5 Ethernet adapter,
+or a hub with both, can share the USB host port. The miner takes addresses by DHCP on every
+interface that is up; Ethernet is preferred when both are connected. The home screen shows the
+preferred IP, and the round button next to the display (`TP2`) cycles the screens.
 
 ## 2. Activate
 

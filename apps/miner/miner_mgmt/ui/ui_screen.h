@@ -59,6 +59,8 @@ void     ui_show_update(int action, uint16_t id);
 int      ui_switch_regular(uint16_t id, uint16_t *settled);
 uint16_t ui_get_regular(void);
 void     ui_seed_regular(uint16_t id);
+void     ui_set_pelish_rotate(int on);
+int      ui_get_pelish_rotate(void);
 void     ui_show_onoff(int onoff);
 void     ui_set_brightness(int pct);
 void     ui_show_wallpaper_reload(void);

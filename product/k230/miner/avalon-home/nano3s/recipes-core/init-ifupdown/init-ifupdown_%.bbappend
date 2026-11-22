@@ -11,8 +11,16 @@
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
-SRC_URI:append:k230-nano3s = " file://udhcpc-eth0.script"
+SRC_URI:append:k230-nano3s = " \
+    file://udhcpc-eth0.script \
+    file://udhcpc-metric.script \
+"
 
 do_install:append:k230-nano3s() {
+    install -m 0755 ${WORKDIR}/udhcpc-metric.script ${D}${sysconfdir}/network/udhcpc-metric.script
     install -m 0755 ${WORKDIR}/udhcpc-eth0.script ${D}${sysconfdir}/network/udhcpc-eth0.script
+    if [ -f ${D}${sysconfdir}/network/udhcpc-eth0.script ]; then
+        sed -i 's|/usr/share/udhcpc/default.script|/etc/network/udhcpc-metric.script|' \
+            ${D}${sysconfdir}/network/udhcpc-eth0.script
+    fi
 }

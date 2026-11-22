@@ -83,6 +83,22 @@
             width: auto;
             object-fit: contain;
             flex-shrink: 0;
+            background-color: transparent;
+        }
+
+        .header-logo .brand-logo-pelish,
+        .header-logo .brand-logo-canaan {
+            background-color: transparent;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .header-logo .brand-logo-divider {
+                background-color: #6b7384;
+            }
+
+            .header-logo .brand-logo-canaan {
+                filter: brightness(1.18);
+            }
         }
 
         .header-name {

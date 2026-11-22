@@ -12,10 +12,9 @@
  */
 
 /*
- * Wired dongle discovery. The single USB net port takes a wifi or a wired
- * dongle, known only once it is plugged, so the wired DHCP client follows
- * the interface and its carrier at runtime. No I/O: the caller observes the
- * interface and performs the action.
+ * Wired USB Ethernet discovery. A hub may present eth0 and/or usb0 beside
+ * wlan0; each wired client follows its own interface and carrier at runtime.
+ * No I/O: the caller observes the interface and performs the action.
  */
 #ifndef NET_SELECT_H
 #define NET_SELECT_H

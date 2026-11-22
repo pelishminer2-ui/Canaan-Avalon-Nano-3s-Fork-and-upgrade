@@ -30,7 +30,7 @@ int net_linux_get_addr(char *buf, unsigned cap);
 
 static inline int net_linux_carrier_up(const char *path)
 {
-    FILE *f = fopen(path, "r");
+    FILE *f = fopen(path, "re");
     int   c;
 
     if (!f)

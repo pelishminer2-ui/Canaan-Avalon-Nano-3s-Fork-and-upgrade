@@ -55,6 +55,9 @@ _Static_assert(0,
 #if NET_WIRED_ALT && !defined(NET_WIRED_IFACE)
 #error "NET_WIRED_ALT but NET_WIRED_IFACE is undeclared: the alternative has no interface to drive"
 #endif
+#if NET_WIRED_ALT && !defined(NET_USB_IFACE)
+#error "NET_WIRED_ALT but NET_USB_IFACE is undeclared: CDC/RNDIS adapters appear as usb0"
+#endif
 #ifndef MM_NET_IFACE
 _Static_assert(0,
         "MM_NET_IFACE undeclared: the product's one NIC, pasted into every "
@@ -265,10 +268,10 @@ _Static_assert(CAP_ACTIVATION == 1, "CAP_ACTIVATION is 1 or undefined");
 #endif
 _Static_assert(NET_WIRED_ALT == 0 || NET_WIRED_ALT == 1, "NET_WIRED_ALT is 0 or 1");
 _Static_assert(NET_WIRED_ALT == 0 || IMPL_NET_IS_WIFI,
-        "NET_WIRED_ALT says the board's one USB net port may carry a "
-        "wired dongle INSTEAD of the wifi one, so it only means anything "
-        "where the primary NIC is wifi (IMPL_NET_IS_WIFI); a board whose wired NIC is "
-        "its only NIC declares that through IMPL_NET_IS_*, not here");
+        "NET_WIRED_ALT says the USB host may carry a WiFi dongle and a USB "
+        "Ethernet adapter at once (hub), with wifi as the primary NIC "
+        "(IMPL_NET_IS_WIFI); a board whose wired NIC is its only NIC "
+        "declares that through IMPL_NET_IS_*, not here");
 
 _Static_assert(IMPL_PSU_IS_DCDC_PD == 1,
         "IMPL_PSU_IS_DCDC_PD is 1: hal_psu() is defined for that kind only "

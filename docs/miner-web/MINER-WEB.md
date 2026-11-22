@@ -52,7 +52,8 @@ builds `ssl` against the OpenSSL 3 API and turns off `caching` and the `civetweb
   `403`. A request with neither passes.
 - **Static files:** only the pages, the brand logos and the two scripts listed in `g_static_files`
   (`web/civetweb_glue.c`); any other path answers `404`. A new page goes into that list; a new
-  third-party script also into the recipe's `do_install`.
+  third-party script also into the recipe's `do_install`. Static responses carry
+  `Cache-Control: public, max-age=300`. Dashboard and other API replies stay `no-store`.
 
 ## Authentication
 

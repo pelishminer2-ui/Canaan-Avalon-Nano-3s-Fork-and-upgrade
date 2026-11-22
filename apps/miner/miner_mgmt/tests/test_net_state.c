@@ -71,6 +71,14 @@ int main(void)
 #if NET_WIRED_ALT
     addr_iface = NET_WIRED_IFACE;
     CHECK(net_state_get() == NET_STATE_UP, "wired alt " NET_WIRED_IFACE " addressed: up");
+    CHECK(net_state_ip(ip, sizeof ip) == 0 && !strcmp(ip, "10.0.0.2"),
+            "wired alt " NET_WIRED_IFACE " addressed: ip %s", ip);
+#ifdef NET_USB_IFACE
+    addr_iface = NET_USB_IFACE;
+    CHECK(net_state_get() == NET_STATE_UP, "CDC/RNDIS " NET_USB_IFACE " addressed: up");
+    CHECK(net_state_ip(ip, sizeof ip) == 0 && !strcmp(ip, "10.0.0.2"),
+            "CDC/RNDIS " NET_USB_IFACE " addressed: ip %s", ip);
+#endif /* NET_USB_IFACE */
 #endif /* NET_WIRED_ALT */
 
     addr_iface = "nosuch0";

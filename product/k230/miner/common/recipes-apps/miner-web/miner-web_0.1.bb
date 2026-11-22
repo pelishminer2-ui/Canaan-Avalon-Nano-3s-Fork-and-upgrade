@@ -49,6 +49,7 @@ do_install() {
     install -m 0755 ${B}/miner_web ${D}${sbindir}/miner_web
 
     # civetweb document_root; on the rootfs because the app volume mounts over /mntapp/release.
+    # assets/ includes the LAN UI pages and brand logos (pelish-logo.png, canaan-logo.png).
     install -d ${D}${datadir}/miner-web/www
     cp -r ${S}/assets/* ${D}${datadir}/miner-web/www/
     cp ${S}/third_party/js-sha256/sha256.min.js ${S}/third_party/qrcodejs/qrcode.min.js \

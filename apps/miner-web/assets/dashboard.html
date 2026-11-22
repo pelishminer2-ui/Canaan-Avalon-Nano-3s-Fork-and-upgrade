@@ -82,6 +82,22 @@
             width: auto;
             object-fit: contain;
             flex-shrink: 0;
+            background-color: transparent;
+        }
+
+        .header-logo .brand-logo-pelish,
+        .header-logo .brand-logo-canaan {
+            background-color: transparent;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .header-logo .brand-logo-divider {
+                background-color: #6b7384;
+            }
+
+            .header-logo .brand-logo-canaan {
+                filter: brightness(1.18);
+            }
         }
 
         .header-name {
@@ -168,8 +184,35 @@
         .dashboard-title-left {
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
+            gap: 12px 24px;
             margin-left: 60px;
             font-size: 20px;
+        }
+
+        .lcd-display-opt {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 400;
+            color: #4a4a4a;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .lcd-display-opt input {
+            width: 16px;
+            height: 16px;
+            margin: 0;
+            accent-color: #418cff;
+            cursor: pointer;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .lcd-display-opt {
+                color: #c5c9d4;
+            }
         }
 
         .dashboard-title-right {
@@ -585,7 +628,13 @@
             </div>
         </div>
         <div class="dashboard-title">
-            <div class="dashboard-title-left">Dashboard</div>
+            <div class="dashboard-title-left">
+                Dashboard
+                <label class="lcd-display-opt">
+                    <input type="checkbox" id="pelish-rotate" onchange="onPelishRotateChange(this)">
+                    Pelish logo rotation
+                </label>
+            </div>
             <div class="dashboard-title-right">
                 <div class="elapsed">Elapsed</div>
                 <div class="elapsed-time">
@@ -983,6 +1032,31 @@
     function goUpgrade() {
         location.href = "upgrade.html";
     }
+    function onPelishRotateChange(el) {
+        const on = el.checked ? "1" : "0";
+        fetch("/api/v1/lcd-display", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "pelish=" + on
+        }).then(r => {
+            if (!r.ok)
+                throw new Error("save failed");
+        }).catch(() => {
+            el.checked = !el.checked;
+            alert("Could not save the display option");
+        });
+    }
+    function loadLcdDisplay() {
+        fetch("/api/v1/lcd-display", { cache: "no-store" }).then(r => {
+            if (!r.ok)
+                throw new Error("load failed");
+            return r.json();
+        }).then(j => {
+            const el = document.getElementById("pelish-rotate");
+            if (el && j && (j.pelish === 1 || j.pelish === "1"))
+                el.checked = true;
+        }).catch(() => {});
+    }
     function updateDashboard(isTimeout) {
         let oUpdate;
         oUpdate = new AJAX("/api/v1/dashboard?num=" + Math.random(),
@@ -999,6 +1073,7 @@
         if (isTimeout)
             setTimeout(function () { updateDashboard(true) }, 15000)
     }
+    loadLcdDisplay();
     updateDashboard(true);
 </script>
 

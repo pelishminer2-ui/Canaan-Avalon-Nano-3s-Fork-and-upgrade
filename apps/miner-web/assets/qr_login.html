@@ -77,6 +77,22 @@
             max-width: 165px;
             object-fit: contain;
             flex-shrink: 0;
+            background-color: transparent;
+        }
+
+        .login-logo .brand-logo-pelish,
+        .login-logo .brand-logo-canaan {
+            background-color: transparent;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .login-logo .brand-logo-divider {
+                background-color: #6b7384;
+            }
+
+            .login-logo .brand-logo-canaan {
+                filter: brightness(1.18);
+            }
         }
 
         @media (max-width: 420px) {

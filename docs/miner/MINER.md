@@ -191,10 +191,12 @@ Ports, authentication and routes: [MINER-WEB.md](../miner-web/MINER-WEB.md).
   wallpaper directory under `/data/userconfig/`. A missing file is created from the factory
   defaults by the data mount, by `mm_miner` at start-up and, for `systemcfg.ini`, by `miner_web`
   ([CROSS-LAYER-RULES.md](../CROSS-LAYER-RULES.md#miner-factory-defaults)).
-- Network: nano3s takes its address from DHCP only; `mm_miner` runs udhcpc on `wlan0`, and on
-  `eth0` when a wired dongle is plugged in. `interfaces` (`iface wlan0 inet dhcp`) is seeded and
-  restored with the other factory defaults; nothing reads it. The device name is `nan3s_` and the
-  last four hex digits of the DNA.
+- Network: nano3s takes its address from DHCP only. `mm_miner` runs udhcpc on `wlan0` and, when a
+  USB Ethernet adapter (or hub) is present, on `eth0` and/or `usb0` at the same time. Wired
+  default routes use metric 100 and Wi-Fi metric 200, so Ethernet is preferred while Wi-Fi stays
+  a fallback. LCD, UDP discovery, `:4028` and the LAN UI report a wired address when one exists.
+  `interfaces` is seeded and restored with the other factory defaults; nothing in `mm_miner` reads
+  it. The device name is `nan3s_` and the last four hex digits of the DNA.
 - Time: chronyd or the phone app sets the clock; the timezone is `[syscfg] timezone`.
 - Factory recovery (TP1 press of at least 5 s) restores `systemcfg.ini`, `pools.conf`,
   `interfaces` and, with BLE, `wpa_supplicant.conf` from the factory defaults, keeps the filter

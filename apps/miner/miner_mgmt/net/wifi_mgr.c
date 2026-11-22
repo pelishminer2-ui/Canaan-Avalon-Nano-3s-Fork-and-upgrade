@@ -81,7 +81,8 @@
  * (-T 3 -A 20) stall DHCP for ~30 s when the first DISCOVER precedes
  * association.
  */
-#define UDHCPC_CMD "udhcpc -i " WIFI_DEV_STA_NAME " -b -T 1 -A 2 -p " UDHCPC_PID_FILE " &"
+#define UDHCPC_CMD \
+    "udhcpc -i " WIFI_DEV_STA_NAME " -b -T 1 -A 2 -s " NET_UDHCPC_SCRIPT " -p " UDHCPC_PID_FILE " &"
 /* wpa_cli reply buffer size, bytes */
 #define BUFF_SIZE    1024
 #define CONN_TIMEOUT 30 /* connect attempt timeout, s */
@@ -592,7 +593,7 @@ static void wifi_scan_ssid_results(char *buffer, int buffer_size, int count)
             break;
 
         strcat(buffer, tmp_ssid);
-        sprintf(tmp_buf, ",%d,%d,", pitem->auth, pitem->signal);
+        snprintf(tmp_buf, sizeof tmp_buf, ",%d,%d,", pitem->auth, pitem->signal);
         strcat(buffer, tmp_buf);
         sent[j++] = g_rssi_idx[i];
     }

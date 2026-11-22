@@ -21,12 +21,12 @@
 
 #define UI_CFG_TEXT_MAX 32 /* stored LCD value incl. NUL, bytes */
 
-void mm_ui_cfg_load(uint16_t *show, int *onoff)
+void mm_ui_cfg_load(uint16_t *show, int *onoff, int *pelish)
 {
-    const char *const keys[] = { "id", "onoff" };
-    const uint32_t    max[]  = { UINT32_MAX, 1 };
-    uint32_t          val[2];
-    int               ok[2];
+    const char *const keys[] = { "id", "onoff", "pelish" };
+    const uint32_t    max[]  = { UINT32_MAX, 1, 1 };
+    uint32_t          val[3];
+    int               ok[3];
 
     for (size_t i = 0; i < sizeof keys / sizeof keys[0]; i++) {
         char v[UI_CFG_TEXT_MAX];
@@ -40,20 +40,25 @@ void mm_ui_cfg_load(uint16_t *show, int *onoff)
                     "keeping the default",
                     keys[i], v);
     }
+    if (ok[2] && pelish)
+        *pelish = (int)val[2];
     if (ok[0] && val[0] >= UI_SUMMARY && val[0] <= UI_WALLPAPER)
         *show = (uint16_t)val[0];
+    else if (ok[0] && val[0] == UI_PELISH && pelish && *pelish)
+        *show = UI_PELISH;
     if (ok[1])
         *onoff = (int)val[1];
 }
 
-int mm_ui_cfg_save(uint16_t show, int onoff)
+int mm_ui_cfg_save(uint16_t show, int onoff, int pelish)
 {
-    char              id[UI_CFG_TEXT_MAX], on[UI_CFG_TEXT_MAX];
-    const char *const sects[] = { "lcd", "lcd" };
-    const char *const keys[]  = { "id", "onoff" };
-    const char *const vals[]  = { id, on };
+    char              id[UI_CFG_TEXT_MAX], on[UI_CFG_TEXT_MAX], pe[UI_CFG_TEXT_MAX];
+    const char *const sects[] = { "lcd", "lcd", "lcd" };
+    const char *const keys[]  = { "id", "onoff", "pelish" };
+    const char *const vals[]  = { id, on, pe };
 
     snprintf(id, sizeof id, "%u", (unsigned)show);
     snprintf(on, sizeof on, "%d", onoff ? 1 : 0);
-    return mm_cfgstore_set_n(sects, keys, vals, 2);
+    snprintf(pe, sizeof pe, "%d", pelish ? 1 : 0);
+    return mm_cfgstore_set_n(sects, keys, vals, 3);
 }

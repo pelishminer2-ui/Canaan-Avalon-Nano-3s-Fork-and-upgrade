@@ -31,8 +31,9 @@ int net_iface_ipv4(const char *name, char *ip, size_t cap)
 {
     struct ifreq r;
     int          fd, rc;
-    const char  *s;
 
+    if (!name || !ip || cap < INET_ADDRSTRLEN)
+        return -1;
     fd = socket(AF_INET, SOCK_DGRAM | SOCK_CLOEXEC, 0);
     if (fd < 0)
         return -1;
@@ -42,11 +43,26 @@ int net_iface_ipv4(const char *name, char *ip, size_t cap)
     close(fd);
     if (rc != 0)
         return -1;
-    s = inet_ntoa(((struct sockaddr_in *)&r.ifr_addr)->sin_addr);
-    if (s == NULL)
+    ip[0] = '\0';
+    if (!inet_ntop(AF_INET, &((struct sockaddr_in *)&r.ifr_addr)->sin_addr, ip, (socklen_t)cap))
         return -1;
-    snprintf(ip, cap, "%s", s);
     return ip[0] ? 0 : -1;
+}
+
+static int net_wired_ipv4(char *ip, size_t cap)
+{
+#if NET_WIRED_ALT
+    if (net_iface_ipv4(NET_WIRED_IFACE, ip, cap) == 0)
+        return 0;
+#ifdef NET_USB_IFACE
+    if (strcmp(NET_USB_IFACE, NET_WIRED_IFACE) != 0 && net_iface_ipv4(NET_USB_IFACE, ip, cap) == 0)
+        return 0;
+#endif /* NET_USB_IFACE */
+#else
+    (void)ip;
+    (void)cap;
+#endif /* NET_WIRED_ALT */
+    return -1;
 }
 
 int net_state_ip(char *ip, size_t cap)
@@ -54,15 +70,14 @@ int net_state_ip(char *ip, size_t cap)
     if (ip == NULL || cap < INET_ADDRSTRLEN)
         return -1;
     ip[0] = '\0';
+    /* Wired USB Ethernet wins so LCD, discovery and the LAN UI show the preferred path. */
+    if (net_wired_ipv4(ip, cap) == 0)
+        return 0;
 #ifdef SUPPORT_BLE
     if (wifi_get_state(ip, (int)cap) == NET_STATE_UP && ip[0])
         return 0;
     ip[0] = '\0';
 #endif /* SUPPORT_BLE */
-#if NET_WIRED_ALT
-    if (net_iface_ipv4(NET_WIRED_IFACE, ip, cap) == 0)
-        return 0;
-#endif /* NET_WIRED_ALT */
     if (net_iface_ipv4(MM_NET_IFACE, ip, cap) == 0)
         return 0;
     return -1;
@@ -73,15 +88,13 @@ int net_state_get(void)
     char ip[INET_ADDRSTRLEN];
     int  st = NET_STATE_DOWN;
 
+    if (net_wired_ipv4(ip, sizeof ip) == 0)
+        return NET_STATE_UP;
 #ifdef SUPPORT_BLE
     st = wifi_get_state(NULL, 0);
     if (st == NET_STATE_UP)
         return NET_STATE_UP;
 #endif /* SUPPORT_BLE */
-#if NET_WIRED_ALT
-    if (net_iface_ipv4(NET_WIRED_IFACE, ip, sizeof ip) == 0)
-        return NET_STATE_UP;
-#endif /* NET_WIRED_ALT */
 #ifdef SUPPORT_BLE
     if (!wifi_carrier_up())
         return st;

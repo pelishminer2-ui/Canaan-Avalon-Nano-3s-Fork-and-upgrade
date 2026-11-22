@@ -21,8 +21,9 @@
 
 /*
  * Network state for every consumer (LCD, UDP discovery, summary screen), so
- * all of them agree on whether the box is online. The USB net port may carry
- * a wifi or a wired dongle, so the transport is decided at runtime.
+ * all of them agree on whether the box is online. The USB host may carry a
+ * WiFi dongle, a USB Ethernet adapter, or both on a hub; IPv4 prefers
+ * eth0/usb0 then falls back to wlan0.
  */
 
 int net_state_ip(char *ip, size_t cap);

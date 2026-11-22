@@ -30,6 +30,7 @@ enum {
     UI_SUMMARY,                   /* regular: hash/power/ip dashboard */
     UI_TIME,                      /* regular: clock                   */
     UI_WALLPAPER,                 /* regular: user image              */
+    UI_PELISH,                    /* regular: Pelish coin logo        */
     UI_N_MAX,                     /* one past the last regular id     */
     UI_CONFIG_NETWORK = UI_N_MAX, /* popup: BLE provisioning  */
     UI_LOST_CONNECT,              /* popup: network connection lost   */

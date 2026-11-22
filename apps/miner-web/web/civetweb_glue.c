@@ -25,6 +25,7 @@
 #include "webcred.h"
 #include "tlscert.h"
 #include "webstatus.h"
+#include "ini.h"
 #include <civetweb.h>
 #include "upload.h"
 #include <fcntl.h>
@@ -101,6 +102,24 @@ static const char *const g_static_files[] = {
 };
 static const char g_qr_begin_uri[] = "/api/v1/auth";
 static const char g_qr_poll_uri[]  = "/api/v1/qr-login";
+
+static int lcd_pelish_from_cfg(const char *path)
+{
+    ini_t      *ini;
+    const char *s;
+    int         v = 0;
+
+    if (!path)
+        return 0;
+    ini = ini_load(path);
+    if (!ini)
+        return 0;
+    s = ini_get(ini, "lcd", "pelish");
+    if (s && s[0] == '1' && s[1] == '\0')
+        v = 1;
+    ini_free(ini);
+    return v;
+}
 
 static void telemetry_refresh_maybe(const char *path)
 {
@@ -473,6 +492,7 @@ static int on_request(struct mg_connection *c, void *cbdata)
             memcpy(nonce, qr_token, 8);
     }
     web_ctx ctx    = g_ctx;
+    ctx.lcd_pelish = lcd_pelish_from_cfg(g_systemcfg);
     ctx.telemetry  = tel_ok ? &tel.dash : NULL;
     ctx.dna        = tel.dna[0] ? tel.dna : NULL;
     ctx.creds      = have_creds ? &creds : NULL;
@@ -681,6 +701,7 @@ static struct mg_context *web_start(const char *port, const char *systemcfg_ini)
         "enable_directory_listing", "no",
         "ssi_pattern", "",
         "index_files", "login.html,dashboard.html,index.html",
+        "additional_header", "Cache-Control: public, max-age=300",
         "ssl_certificate", NULL,
         "ssl_protocol_version", WEB_TLS_PROTOCOL,
         NULL

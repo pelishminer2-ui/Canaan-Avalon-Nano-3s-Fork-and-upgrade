@@ -34,6 +34,8 @@ void    ui_dispatch_free(ui_dispatch *d);
 void    ui_show_add(ui_dispatch *d, uint16_t id);
 void    ui_show_delete(ui_dispatch *d, uint16_t id);
 void    ui_show_switch(ui_dispatch *d, int16_t id);
+void    ui_set_pelish_rotate(int on);
+int     ui_get_pelish_rotate(void);
 ui_show ui_pick_show(ui_dispatch *d);
 int     ui_attach_err_flag(const ui_dispatch *d);
 int     ui_errcode(uint16_t id, const char **code, const char **desc);
