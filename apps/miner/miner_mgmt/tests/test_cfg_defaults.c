@@ -57,6 +57,7 @@ static const struct cfg_key g_keys[] = {
 #if CAP_LCD
     { "lcd", "id", 0, FEAT_BASE },
     { "lcd", "onoff", 0, FEAT_BASE },
+    { "lcd", "pelish", 0, FEAT_BASE },
     { "audio", "volume", 0, FEAT_BASE },
 #endif
 };
@@ -133,7 +134,7 @@ int main(void)
             "prod and model are PROD_NAME %s and MODEL %s", PROD_NAME, MODEL);
 #if CAP_LCD
     CHECK(num_is("lcd", "id", UI_SUMMARY) && num_is("lcd", "onoff", 1) &&
-                    num_is("audio", "volume", 100),
+                    num_is("lcd", "pelish", 0) && num_is("audio", "volume", 100),
             "[lcd] and [audio] are the display defaults");
 #endif
     ini_free(g_sys);

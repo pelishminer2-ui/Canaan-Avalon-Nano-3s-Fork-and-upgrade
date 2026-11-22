@@ -71,6 +71,18 @@ int main(void)
     CHECK(d3.regular.id == UI_WALLPAPER, "switch cycle -> WALLPAPER");
     ui_show_switch(&d3, 0);
     CHECK(d3.regular.id == UI_SUMMARY, "switch cycle wraps -> SUMMARY");
+    ui_show_switch(&d3, UI_PELISH);
+    CHECK(d3.regular.id == UI_SUMMARY, "PELISH explicit id is skipped when rotation is off");
+    ui_set_pelish_rotate(1);
+    ui_show_switch(&d3, 0);
+    CHECK(d3.regular.id == UI_TIME, "pelish on: SUMMARY -> TIME");
+    ui_show_switch(&d3, 0);
+    CHECK(d3.regular.id == UI_WALLPAPER, "pelish on: TIME -> WALLPAPER");
+    ui_show_switch(&d3, 0);
+    CHECK(d3.regular.id == UI_PELISH, "pelish on: WALLPAPER -> PELISH coin");
+    ui_show_switch(&d3, 0);
+    CHECK(d3.regular.id == UI_SUMMARY, "pelish on: PELISH wraps -> SUMMARY");
+    ui_set_pelish_rotate(0);
     ui_show_switch(&d3, UI_TIME);
     CHECK(d3.regular.id == UI_TIME, "switch explicit id");
 

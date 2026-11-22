@@ -74,54 +74,59 @@ int main(void)
     CHECK(mm_cfgstore_open(path) == 0, "store opens over a missing file");
     uint16_t show  = 1;
     int      onoff = 1;
-    mm_ui_cfg_load(&show, &onoff);
-    CHECK(show == 1 && onoff == 1, "load missing file keeps defaults");
+    int pelish = 0;
+    mm_ui_cfg_load(&show, &onoff, &pelish);
+    CHECK(show == 1 && onoff == 1 && pelish == 0, "load missing file keeps defaults");
 
-    CHECK(mm_ui_cfg_save(3, 0) == 0, "save ok");
+    CHECK(mm_ui_cfg_save(3, 0, 1) == 0, "save ok");
     CHECK(access(path, F_OK) != 0, "save changes RAM only");
     CHECK(mm_cfgstore_flush() == 1, "flush writes the save");
     CHECK(mm_cfgstore_reload() == 0, "reload the written file");
     show  = 1;
     onoff = 1;
-    mm_ui_cfg_load(&show, &onoff);
+    mm_ui_cfg_load(&show, &onoff, &pelish);
     CHECK(show == 3, "show round-trips");
     CHECK(onoff == 0, "onoff round-trips");
+    CHECK(pelish == 1, "pelish round-trips");
     ini_t *saved = ini_load(path);
-    CHECK(saved && ini_get(saved, "lcd", "id") && !ini_get(saved, "lcd", "brightness"),
+    CHECK(saved && ini_get(saved, "lcd", "id") && ini_get(saved, "lcd", "pelish") &&
+                    !ini_get(saved, "lcd", "brightness"),
             "legacy id key is used and brightness is not persisted");
     ini_free(saved);
 
-    CHECK(mm_ui_cfg_save(2, 1) == 0, "re-save ok");
-    show  = 0;
-    onoff = 9;
-    mm_ui_cfg_load(&show, &onoff);
-    CHECK(show == 2 && onoff == 1, "re-save overwrites");
+    CHECK(mm_ui_cfg_save(2, 1, 0) == 0, "re-save ok");
+    show   = 0;
+    onoff  = 9;
+    pelish = 9;
+    mm_ui_cfg_load(&show, &onoff, &pelish);
+    CHECK(show == 2 && onoff == 1 && pelish == 0, "re-save overwrites");
     CHECK(mm_cfgstore_flush() == 1 && mm_cfgstore_reload() == 0, "re-save is written");
 
-    CHECK(mm_ui_cfg_save(show, onoff) == 0, "unchanged re-save ok");
+    CHECK(mm_ui_cfg_save(show, onoff, pelish) == 0, "unchanged re-save ok");
     CHECK(mm_cfgstore_flush() == 0, "an unchanged re-save writes nothing");
     show  = 0;
     onoff = 9;
-    mm_ui_cfg_load(&show, &onoff);
-    CHECK(show == 2 && onoff == 1, "non-default show survives boot cycle");
+    mm_ui_cfg_load(&show, &onoff, &pelish);
+    CHECK(show == 2 && onoff == 1 && pelish == 0, "non-default show survives boot cycle");
 
     mm_cfgstore_freeze(1);
-    CHECK(mm_ui_cfg_save(4, 0) != 0, "a frozen store refuses the save");
+    CHECK(mm_ui_cfg_save(4, 0, 1) != 0, "a frozen store refuses the save");
     mm_cfgstore_freeze(0);
-    show  = 0;
-    onoff = 9;
-    mm_ui_cfg_load(&show, &onoff);
-    CHECK(show == 2 && onoff == 1, "a refused save leaves the stored values");
+    show   = 0;
+    onoff  = 9;
+    pelish = 9;
+    mm_ui_cfg_load(&show, &onoff, &pelish);
+    CHECK(show == 2 && onoff == 1 && pelish == 0, "a refused save leaves the stored values");
 
     write_file(path, "[lcd]\nid = 9999\nonoff = 1\nbrightness = 9999\n");
     CHECK(mm_cfgstore_reload() == 0, "reload the garbage file");
     show = 1;
-    mm_ui_cfg_load(&show, &onoff);
+    mm_ui_cfg_load(&show, &onoff, &pelish);
     CHECK(show == 1, "invalid positive id keeps the caller's default");
     write_file(path, "[lcd]\nid = -7\n");
     CHECK(mm_cfgstore_reload() == 0, "reload the negative id file");
     log_clear();
-    mm_ui_cfg_load(&show, &onoff);
+    mm_ui_cfg_load(&show, &onoff, &pelish);
     CHECK(show == 1, "invalid negative id keeps the caller's default");
     CHECK(log_has("not a valid number"), "a negative id is logged");
 
@@ -130,7 +135,7 @@ int main(void)
     show  = 2;
     onoff = 1;
     log_clear();
-    mm_ui_cfg_load(&show, &onoff);
+    mm_ui_cfg_load(&show, &onoff, &pelish);
     CHECK(show == 2 && onoff == 1, "non-numeric id and onoff keep the caller's defaults");
     CHECK(log_has("id = \"abc\"") && log_has("onoff = \"abc\""),
             "non-numeric id and onoff are logged");
@@ -140,7 +145,7 @@ int main(void)
     show  = 2;
     onoff = 1;
     log_clear();
-    mm_ui_cfg_load(&show, &onoff);
+    mm_ui_cfg_load(&show, &onoff, &pelish);
     CHECK(show == 2 && onoff == 1, "trailing garbage keeps the caller's defaults");
     CHECK(log_has("id = \"3x\"") && log_has("onoff = \"0x\""), "trailing garbage is logged");
 
@@ -148,7 +153,7 @@ int main(void)
     CHECK(mm_cfgstore_reload() == 0, "reload the over-range onoff file");
     onoff = 0;
     log_clear();
-    mm_ui_cfg_load(&show, &onoff);
+    mm_ui_cfg_load(&show, &onoff, &pelish);
     CHECK(onoff == 1, "an onoff above 1 is clamped to 1");
     CHECK(!log_has("not a valid number"), "a clamped onoff is not logged");
 

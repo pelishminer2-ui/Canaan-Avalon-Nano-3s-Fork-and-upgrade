@@ -16,7 +16,7 @@
 
 #include <stdint.h>
 
-void mm_ui_cfg_load(uint16_t *show, int *onoff);
-int  mm_ui_cfg_save(uint16_t show, int onoff);
+void mm_ui_cfg_load(uint16_t *show, int *onoff, int *pelish);
+int  mm_ui_cfg_save(uint16_t show, int onoff, int pelish);
 
 #endif /* MM_UI_CFG_H */

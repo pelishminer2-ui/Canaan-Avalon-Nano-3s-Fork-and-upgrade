@@ -45,6 +45,8 @@
 #define IMG_START_MINING PIC_PATH "9.png"
 #define IMG_FILTER       PIC_PATH "filter.png" /* dirty filter image */
 #define IMG_NO_USB       PIC_PATH "no_usb.png" /* no network dongle image */
+/* Circular Pelish Crypto & More coin only — never the Avalon chassis product photo */
+#define IMG_PELISH       PIC_PATH "pelish.png"
 
 #define WATCH_PATH       ROOT_PATH "variant/watch/"       /* clock screen images */
 #define IMG_WATCH_BG     WATCH_PATH "watch_bg.png"        /* clock face */
@@ -96,6 +98,7 @@ enum {
     SC_NO_USB,     /* no network dongle */
     SC_CHECK_POOL, /* pool inactive */
     SC_FAULT,      /* fault stop: icon, error code, description */
+    SC_PELISH,     /* Pelish coin logo */
     SC_MAX,
 };
 
@@ -172,6 +175,16 @@ static lv_obj_t *screen_img(const char *path)
 {
     lv_obj_t *scr = make_screen();
     make_img(scr, path);
+    return scr;
+}
+
+static lv_obj_t *screen_pelish(void)
+{
+    lv_obj_t *scr = make_screen();
+    lv_obj_t *img = make_img(scr, IMG_PELISH);
+
+    lv_obj_set_style_radius(img, LCD_HOR_RES / 2, LV_PART_MAIN | LV_STATE_DEFAULT);
+    lv_obj_set_style_clip_corner(img, true, LV_PART_MAIN | LV_STATE_DEFAULT);
     return scr;
 }
 
@@ -473,6 +486,7 @@ int ui_screen_init(void)
     g_screens[SC_NO_USB]       = screen_img(IMG_NO_USB);
     g_screens[SC_CHECK_POOL]   = screen_img(IMG_CHECK_POOL);
     g_screens[SC_FAULT]        = screen_fault();
+    g_screens[SC_PELISH]       = screen_pelish();
 
     lv_screen_load_anim(g_screens[SC_BLACK], LV_SCR_LOAD_ANIM_FADE_IN, 0, 0, false);
     return 0;
@@ -495,6 +509,8 @@ static int id_to_slot(uint16_t id)
         return SC_TIME;
     case UI_WALLPAPER:
         return SC_WALLPAPER;
+    case UI_PELISH:
+        return SC_PELISH;
     case UI_CONFIG_NETWORK:
         return SC_CONFIG;
     case UI_LOST_CONNECT:
