@@ -40,6 +40,15 @@
 /* Middle of the VOL_MIN..VOL_MAX rail range */
 #define RAIL_MID ((uint16_t)((VOL_MIN + VOL_MAX) / 2))
 
+__attribute__((weak)) int mm_tune_autotune(void)
+{
+    return 0;
+}
+__attribute__((weak)) int mm_tune_aftermarket(void)
+{
+    return 0;
+}
+
 #include "mm_vf.c"
 
 static int      g_vf_sends;                /* MSG_ASIC_VF sends seen */

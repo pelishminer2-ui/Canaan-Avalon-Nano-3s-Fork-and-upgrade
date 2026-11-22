@@ -36,7 +36,8 @@ set(WEB_STACK_SRCS stub_civetweb.c
 set(WEB_STACK_INCS
     ${CMAKE_CURRENT_SOURCE_DIR}/stubs
     ${WEB_DIR} ${CTL_DIR}/api ${CTL_DIR}/ota ${CFGWR_DIR} ${POOL_DIR}
-    ${COMMON_DIR}/json ${COMMON_DIR}/ini ${COMMON_DIR}/sha ${COMMON_DIR}/proto)
+    ${COMMON_DIR}/json ${COMMON_DIR}/ini ${COMMON_DIR}/sha ${COMMON_DIR}/proto
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../miner/hal/board)
 
 find_package(OpenSSL REQUIRED)
 

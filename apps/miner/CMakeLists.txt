@@ -158,6 +158,7 @@ add_library(mc_mgmt STATIC
     miner_mgmt/ctrl/fan_pid.c miner_mgmt/ctrl/fan_health.c
     miner_mgmt/ctrl/pout_reg.c
     miner_mgmt/ctrl/aging.c
+    miner_mgmt/ctrl/autotune.c
     miner_mgmt/ctrl/led_fx.c
     miner_mgmt/ctrl/softonoff_sched.c
     miner_mgmt/ctrl/net_select.c
@@ -235,6 +236,7 @@ add_executable(mm_miner app/mm_miner_main.c app/mm_telem.c
     app/mm_system.c
     app/mm_vf.c
     app/mm_fan.c
+    app/mm_tune.c
     app/mm_net.c
     app/mm_tz.c
     app/mm_logrot.c

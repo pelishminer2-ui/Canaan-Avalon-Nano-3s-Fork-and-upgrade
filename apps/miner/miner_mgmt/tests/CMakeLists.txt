@@ -147,6 +147,12 @@ foreach(BOARD ${MINER_TEST_BOARDS})
         ${CTL_DIR}/../hal/board)
     target_link_libraries(test_fan_pid_${BOARD} PRIVATE m)
     add_test(NAME fan_pid_${BOARD} COMMAND test_fan_pid_${BOARD})
+
+    add_executable(test_autotune_${BOARD} test_autotune.c ${CTL_DIR}/ctrl/autotune.c)
+    add_dependencies(test_autotune_${BOARD} gen_boardconf_${BOARD})
+    target_include_directories(test_autotune_${BOARD} PRIVATE ${CTL_DIR}/ctrl ${BCDIR}
+        ${CTL_DIR}/../hal/board ${CTL_DIR}/../app)
+    add_test(NAME autotune_${BOARD} COMMAND test_autotune_${BOARD})
 endforeach()
 
 add_executable(test_pout_reg test_pout_reg.c ${CTL_DIR}/ctrl/pout_reg.c)
@@ -861,7 +867,7 @@ endforeach()
 foreach(BOARD ${MINER_TEST_BOARDS})
     miner_board_select(${BOARD} BCT BCDIR)
     add_executable(test_mm_vf_${BOARD} test_mm_vf.c
-        ${CTL_DIR}/ctrl/pout_reg.c ${CTL_DIR}/ctrl/aging.c
+        ${CTL_DIR}/ctrl/pout_reg.c ${CTL_DIR}/ctrl/aging.c ${CTL_DIR}/ctrl/autotune.c
         ${CTL_DIR}/cali/cali.c ${CTL_DIR}/../common/util/cfg_u32.c
         ${CTL_DIR}/../common/ini/ini.c ${CTL_DIR}/../common/ini/ini_file.c
         ${CTL_DIR}/../common/proto/board_desc.c

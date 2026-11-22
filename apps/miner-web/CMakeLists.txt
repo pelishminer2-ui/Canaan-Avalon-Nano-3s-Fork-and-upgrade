@@ -36,7 +36,8 @@ target_include_directories(miner_web PRIVATE
     ${W}/web ${MINER}/miner_mgmt/api ${MINER}/common/pool
     ${MINER}/common/cfgwr ${MINER}/miner_mgmt/ota
     ${MINER}/common/json ${MINER}/common/ini ${MINER}/common/sha
-    ${MINER}/common/proto ${MINER}/common/util ${MINER}/osif)
+    ${MINER}/common/proto ${MINER}/common/util ${MINER}/osif
+    ${MINER}/hal/board)
 
 option(WEB_PLUGIN "build miner_web with the web plugin of WEB_PLUGIN_DIR" OFF)
 set(WEB_PLUGIN_DIR "" CACHE PATH "directory holding web_plugin.cmake")

@@ -504,6 +504,48 @@ static int rest_json(const web_request *req)
     return t && !strncasecmp(t, CT_JSON, n) && (t[n] == '\0' || t[n] == ';' || t[n] == ' ');
 }
 
+/* 1, 0, or -1 when key is missing or not a boolean. */
+static int rest_flag(const web_request *req, const char *key)
+{
+    char        raw[12] = "";
+    const char *body    = req->body ? req->body : "";
+
+    if (web_form_get(body, key, raw, sizeof raw) == 1) {
+        if (!strcmp(raw, "1") || !strcasecmp(raw, "on") || !strcasecmp(raw, "true"))
+            return 1;
+        if (!strcmp(raw, "0") || !strcasecmp(raw, "off") || !strcasecmp(raw, "false"))
+            return 0;
+        return -1;
+    }
+    if (!rest_json(req))
+        return -1;
+    json_value       *jv = json_parse(body);
+    const json_value *pv = json_object_get(jv, key);
+    int               v  = -1;
+    if (json_is(pv, JSON_NUMBER) && (json_int(pv) == 0 || json_int(pv) == 1))
+        v = (int)json_int(pv);
+    json_free(jv);
+    return v;
+}
+
+static const char PSU_CAP_WARN[] =
+        "Aftermarket PSU only. Raises the software power cap above the stock "
+        "USB-PD limit. Not for the included adapter.";
+
+static void psu_cap_json(jwriter *w, const web_ctx *ctx, int on)
+{
+    int stock = ctx ? ctx->power_cap_stock_w : 0;
+    int raised = ctx ? ctx->power_cap_aftermarket_w : 0;
+    int fault = ctx ? ctx->power_cap_fault_w : 0;
+
+    jw_kv_raw(w, "aftermarket_psu", on ? "1" : "0");
+    jw_kv_fmt(w, "power_cap_w", "%d", on ? raised : stock);
+    jw_kv_fmt(w, "stock_cap_w", "%d", stock);
+    jw_kv_fmt(w, "aftermarket_cap_w", "%d", raised);
+    jw_kv_fmt(w, "fault_cap_w", "%d", fault);
+    jw_kv_str(w, "warning", PSU_CAP_WARN);
+}
+
 static int rest_status(web_response *resp, int status, int code, const char *msg, char *out,
         size_t cap)
 {
@@ -1005,6 +1047,88 @@ static int rest_route(const web_request *req, const web_ctx *ctx, int token_ok, 
         resp->content_type  = CT_JSON;
         resp->body_len      = jw_len(&w);
         web_logf(stderr, "INFO", "Wi-Fi with Ethernet set from the web page: %d\n", keep);
+        return resp->status = 200;
+    }
+
+    if (!strcmp(r, "autotune")) {
+        if (req->method == WEB_GET) {
+            if (!authed)
+                return rest_refused(resp, 401, r, "not logged in", out, cap, WEB_STATUS_AUTH_CODE,
+                        WEB_STATUS_NO_LOGIN_MSG);
+            jwriter w;
+            jw_init(&w, out, cap);
+            jw_obj_open(&w);
+            jw_kv_raw(&w, "autotune", ctx && ctx->autotune ? "1" : "0");
+            jw_obj_close(&w);
+            resp->content_type  = CT_JSON;
+            resp->body_len      = jw_len(&w);
+            return resp->status = 200;
+        }
+        if (req->method != WEB_POST) {
+            op_refused(resp, 405, "autotune option", "only GET and POST are accepted");
+            return rest_method(resp, out, cap);
+        }
+        if (!authed) {
+            op_refused(resp, 401, "autotune option", "not logged in");
+            return reply(resp, 401, CT_JSON, out, cap, "{\"error\":\"unauthorized\"}");
+        }
+        int mode = rest_flag(req, "autotune");
+        if (mode < 0)
+            return reply(resp, 400, CT_JSON, out, cap, "{\"error\":\"invalid_autotune\"}");
+        if (!ctx || !ctx->autotune_set || !ctx->autotune_set(mode)) {
+            web_logf(stderr, "ERR", "autotune option from the web page failed\n");
+            return reply(resp, 503, CT_JSON, out, cap, "{\"error\":\"autotune_failed\"}");
+        }
+        jwriter w;
+        jw_init(&w, out, cap);
+        jw_obj_open(&w);
+        jw_kv_str(&w, "result", "ok");
+        jw_kv_raw(&w, "autotune", mode ? "1" : "0");
+        jw_obj_close(&w);
+        resp->content_type  = CT_JSON;
+        resp->body_len      = jw_len(&w);
+        web_logf(stderr, "INFO", "autotune set from the web page: %d\n", mode);
+        return resp->status = 200;
+    }
+
+    if (!strcmp(r, "psu-cap")) {
+        if (req->method == WEB_GET) {
+            if (!authed)
+                return rest_refused(resp, 401, r, "not logged in", out, cap, WEB_STATUS_AUTH_CODE,
+                        WEB_STATUS_NO_LOGIN_MSG);
+            jwriter w;
+            jw_init(&w, out, cap);
+            jw_obj_open(&w);
+            psu_cap_json(&w, ctx, ctx && ctx->aftermarket_psu);
+            jw_obj_close(&w);
+            resp->content_type  = CT_JSON;
+            resp->body_len      = jw_len(&w);
+            return resp->status = 200;
+        }
+        if (req->method != WEB_POST) {
+            op_refused(resp, 405, "aftermarket PSU option", "only GET and POST are accepted");
+            return rest_method(resp, out, cap);
+        }
+        if (!authed) {
+            op_refused(resp, 401, "aftermarket PSU option", "not logged in");
+            return reply(resp, 401, CT_JSON, out, cap, "{\"error\":\"unauthorized\"}");
+        }
+        int on = rest_flag(req, "aftermarket_psu");
+        if (on < 0)
+            return reply(resp, 400, CT_JSON, out, cap, "{\"error\":\"invalid_aftermarket_psu\"}");
+        if (!ctx || !ctx->aftermarket_psu_set || !ctx->aftermarket_psu_set(on)) {
+            web_logf(stderr, "ERR", "aftermarket PSU option from the web page failed\n");
+            return reply(resp, 503, CT_JSON, out, cap, "{\"error\":\"aftermarket_psu_failed\"}");
+        }
+        jwriter w;
+        jw_init(&w, out, cap);
+        jw_obj_open(&w);
+        jw_kv_str(&w, "result", "ok");
+        psu_cap_json(&w, ctx, on);
+        jw_obj_close(&w);
+        resp->content_type  = CT_JSON;
+        resp->body_len      = jw_len(&w);
+        web_logf(stderr, "INFO", "aftermarket PSU cap set from the web page: %d\n", on);
         return resp->status = 200;
     }
 

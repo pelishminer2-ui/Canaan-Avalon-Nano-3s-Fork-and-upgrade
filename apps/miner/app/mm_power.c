@@ -24,6 +24,8 @@
 #include "mm_fan.h"
 #include "mm_telem.h"
 #include "mm_vf.h"
+#include "mm_tune.h"
+#include "power_cap.h"
 #include "psu_ops.h"
 #include "osif.h"
 
@@ -38,7 +40,8 @@ static pthread_mutex_t g_rail_lock = PTHREAD_MUTEX_INITIALIZER; /* rail-on vs re
 
 /* Written by mm_power_prepare() on rail power-on; read on any thread. */
 static _Atomic unsigned g_power_modes = 1u << 0; /* modes the adapter powers, bit n = mode n */
-static _Atomic uint16_t g_power_watts; /* adapter power at the last successful admission, W */
+static _Atomic uint16_t g_power_watts; /* capped budget at the last admission, W */
+static _Atomic uint16_t g_power_raw;   /* PD advertisement before the software cap, W */
 
 /* Set by rail_power_off() on any thread, including the reboot paths; cleared by a
  * confirmed rail-off or a successful rail-on. */
@@ -52,6 +55,36 @@ static int mm_power_limit_w(void)
     return (psu && psu->pout_limit) ? (int)g_power_watts : -1;
 }
 
+static void mm_power_modes_from(unsigned *allowed, uint16_t watts)
+{
+    *allowed = 0;
+    for (uint8_t mode = 0; mode < CALI_MODE_MAX; mode++) {
+        const cali_param *params = cali_default_param(g_board.max_asic, mode);
+        if (params->max_pout && (unsigned)params->max_pout + PD_POWER_RESERVE_W <= watts)
+            *allowed |= 1u << mode;
+    }
+    *allowed |= 1u << 0;
+}
+
+/* Re-apply the software cap to the last PD advertisement. Does not renegotiate PD. */
+static void mm_power_cap_sync(void)
+{
+    uint16_t raw = g_power_raw;
+
+    if (!raw)
+        return;
+    int      after  = mm_tune_aftermarket();
+    uint16_t capped = power_cap_apply(raw, after);
+    if (capped == g_power_watts)
+        return;
+    unsigned allowed;
+    mm_power_modes_from(&allowed, capped);
+    g_power_modes = allowed;
+    g_power_watts = capped;
+    osif_log(OSIF_LOG_OP, "software power cap %u W (PD advertised %u W, aftermarket %s)",
+            (unsigned)capped, (unsigned)raw, after ? "on" : "off");
+}
+
 static int mm_power_modes(unsigned *allowed, uint16_t *watts)
 {
     *allowed                 = 0;
@@ -59,12 +92,9 @@ static int mm_power_modes(unsigned *allowed, uint16_t *watts)
     const hal_psu_ops_t *psu = hal_psu();
     if (!psu || !psu->pout_limit || psu->pout_limit(watts) != 0)
         return -1;
-    for (uint8_t mode = 0; mode < CALI_MODE_MAX; mode++) {
-        const cali_param *params = cali_default_param(g_board.max_asic, mode);
-        if (params->max_pout && (unsigned)params->max_pout + PD_POWER_RESERVE_W <= *watts)
-            *allowed |= 1u << mode;
-    }
-    *allowed |= 1u << 0;
+    g_power_raw = *watts;
+    *watts      = power_cap_apply(*watts, mm_tune_aftermarket());
+    mm_power_modes_from(allowed, *watts);
     return 0;
 }
 
@@ -343,6 +373,8 @@ void freq_ramp_rule(void *ctx, uint64_t now_ms)
 {
     (void)ctx;
     (void)now_ms;
+
+    mm_power_cap_sync();
 
     mm_telem_t t;
     mm_telem_get(&t);

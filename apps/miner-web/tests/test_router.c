@@ -182,6 +182,27 @@ static int wifi_eth_set_stub(int on)
     return 1;
 }
 
+static int g_autotune_ok = 1;
+static int g_autotune_val;
+static int g_psu_ok = 1;
+static int g_psu_val;
+
+static int autotune_set_stub(int mode)
+{
+    if (!g_autotune_ok)
+        return 0;
+    g_autotune_val = mode ? 1 : 0;
+    return 1;
+}
+
+static int aftermarket_set_stub(int on)
+{
+    if (!g_psu_ok)
+        return 0;
+    g_psu_val = on ? 1 : 0;
+    return 1;
+}
+
 int core_api_call(const char *cmd, const char *param, char *out, size_t cap)
 {
     g_core_calls++;
@@ -1265,7 +1286,84 @@ int main(void)
                 sizeof out, &r);
         CHECK(r.status == 200 && g_wifi_eth_val == 1, "POST /api/v1/wifi-eth JSON 1");
 
-        /* unknown REST resource */
+        ctx.autotune                = 0;
+        ctx.aftermarket_psu         = 0;
+        ctx.power_cap_stock_w       = 140;
+        ctx.power_cap_aftermarket_w = 150;
+        ctx.power_cap_fault_w       = 155;
+        ctx.autotune_set            = NULL;
+        ctx.aftermarket_psu_set     = NULL;
+        g_autotune_ok               = 1;
+        g_autotune_val              = 0;
+        g_psu_ok                    = 1;
+        g_psu_val                   = 0;
+        web_request qag = { .method = WEB_GET, .path = "/api/v1/autotune" };
+        web_route(&qag, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 401 && g_core_calls == 0, "GET /api/v1/autotune unauthed -> 401");
+        qag.auth_cookie = COOKIE;
+        web_route(&qag, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && strstr(out, "\"autotune\":0") != NULL && g_core_calls == 0,
+                "GET /api/v1/autotune -> 200 default off, no ascset");
+        ctx.autotune = 1;
+        web_route(&qag, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && strstr(out, "\"autotune\":1") != NULL,
+                "GET /api/v1/autotune mild on");
+        web_request qap = { .method = WEB_POST, .path = "/api/v1/autotune", .body = "autotune=1" };
+        web_route(&qap, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 401 && g_core_calls == 0, "POST /api/v1/autotune unauthed -> 401");
+        qap.auth_cookie = COOKIE;
+        web_route(&qap, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 503 && g_core_calls == 0, "POST /api/v1/autotune without a setter -> 503");
+        ctx.autotune_set = autotune_set_stub;
+        web_route(&qap, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && strstr(out, "\"autotune\":1") != NULL && g_autotune_val == 1 &&
+                        g_core_calls == 0,
+                "POST /api/v1/autotune autotune=1 -> persist, no ascset");
+        qap.body = "autotune=0";
+        web_route(&qap, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && g_autotune_val == 0, "POST /api/v1/autotune autotune=0");
+        qap.body = "autotune=2";
+        web_route(&qap, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 400 && g_autotune_val == 0, "POST /api/v1/autotune autotune=2 -> 400");
+        rest(WEB_POST, "/api/v1/autotune", "application/json", "{\"autotune\":1}", NULL, 1, out,
+                sizeof out, &r);
+        CHECK(r.status == 200 && g_autotune_val == 1, "POST /api/v1/autotune JSON 1");
+
+        web_request qcapg = { .method = WEB_GET, .path = "/api/v1/psu-cap" };
+        web_route(&qcapg, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 401 && g_core_calls == 0, "GET /api/v1/psu-cap unauthed -> 401");
+        qcapg.auth_cookie = COOKIE;
+        web_route(&qcapg, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && strstr(out, "\"aftermarket_psu\":0") != NULL &&
+                        strstr(out, "\"power_cap_w\":140") != NULL &&
+                        strstr(out, "\"stock_cap_w\":140") != NULL &&
+                        strstr(out, "\"aftermarket_cap_w\":150") != NULL &&
+                        strstr(out, "\"fault_cap_w\":155") != NULL &&
+                        strstr(out, "Aftermarket PSU only") != NULL && g_core_calls == 0,
+                "GET /api/v1/psu-cap -> 200 stock 140 W, warning, no ascset");
+        web_request qcapp = { .method = WEB_POST,
+            .path                   = "/api/v1/psu-cap",
+            .body                   = "aftermarket_psu=1",
+            .auth_cookie            = COOKIE };
+        web_route(&qcapp, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 503 && g_psu_val == 0 && g_core_calls == 0,
+                "POST /api/v1/psu-cap without a setter -> 503");
+        ctx.aftermarket_psu_set = aftermarket_set_stub;
+        web_route(&qcapp, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && g_psu_val == 1 && strstr(out, "\"power_cap_w\":150") != NULL &&
+                        strstr(out, "Aftermarket PSU only") != NULL && g_core_calls == 0,
+                "POST /api/v1/psu-cap aftermarket_psu=1 -> 150 W, no ascset");
+        qcapp.body = "aftermarket_psu=0";
+        web_route(&qcapp, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 200 && g_psu_val == 0 && strstr(out, "\"power_cap_w\":140") != NULL,
+                "POST /api/v1/psu-cap aftermarket_psu=0 -> stock 140 W");
+        qcapp.body = "aftermarket_psu=2";
+        web_route(&qcapp, &ctx, out, sizeof out, &r);
+        CHECK(r.status == 400 && g_psu_val == 0, "POST /api/v1/psu-cap aftermarket_psu=2 -> 400");
+        rest(WEB_POST, "/api/v1/psu-cap", "application/json", "{\"aftermarket_psu\":1}", NULL, 1,
+                out, sizeof out, &r);
+        CHECK(r.status == 200 && g_psu_val == 1, "POST /api/v1/psu-cap JSON 1");
+
         web_request qu = { .method = WEB_GET, .path = "/api/v1/bogus" };
         web_route(&qu, &ctx, out, sizeof out, &r);
         CHECK(r.status == 404 && strstr(out, "\"STATUS\":\"E\"") != NULL &&

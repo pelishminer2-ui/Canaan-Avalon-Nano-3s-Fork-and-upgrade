@@ -44,5 +44,8 @@ uint16_t fan_pid_step(fan_pid_state_t *st, const fan_pid_params_t *pp, float tem
         uint16_t target_temp, int last_duty_x10, int *duty_x10, int *changed);
 void     fan_pid_set_fixed(fan_pid_state_t *st, int duty_pct);
 int      fan_pid_pick_input(int tavg, int tmax, const int *outlet, int n);
+/* Pull the temperature band back inside [band_min, band_max]. Returns 1 if a
+ * limit was outside that band. Gains and thermal trip points are untouched. */
+int fan_pid_clamp_band(fan_pid_params_t *pp, int band_min, int band_max);
 
 #endif /* FAN_PID_H */

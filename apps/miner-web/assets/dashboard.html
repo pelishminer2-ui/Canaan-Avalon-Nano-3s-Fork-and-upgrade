@@ -111,7 +111,16 @@
                     <input type="checkbox" id="wifi-eth-keep" onchange="onWifiEthChange(this)">
                     Keep Wi-Fi on with Ethernet
                 </label>
+                <label class="lcd-display-opt">
+                    <input type="checkbox" id="autotune-mild" onchange="onAutotuneChange(this)">
+                    Mild autotune (A3197S board)
+                </label>
+                <label class="lcd-display-opt" title="Aftermarket PSU only. Not for the included USB-PD adapter.">
+                    <input type="checkbox" id="aftermarket-psu" onchange="onAftermarketChange(this)">
+                    Aftermarket PSU / raise 140W limit
+                </label>
             </div>
+            <p class="option-note">Aftermarket PSU only. Raises the software power cap from the stock 140 W USB-PD limit to 150 W (Mean Well LRS-150 class), still under the 155 W fault trip. Not for the included adapter.</p>
             <div class="status-row">
                 <div class="card">
                     <div class="card-label">Mining status</div>
@@ -599,6 +608,56 @@
                 el.checked = true;
         }).catch(() => {});
     }
+    function onAutotuneChange(el) {
+        const on = el.checked ? "1" : "0";
+        fetch("/api/v1/autotune", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "autotune=" + on
+        }).then(r => {
+            if (!r.ok) throw new Error("save failed");
+        }).catch(() => {
+            el.checked = !el.checked;
+            alert("Could not save autotune");
+        });
+    }
+    function loadAutotune() {
+        fetch("/api/v1/autotune", { cache: "no-store" }).then(r => {
+            if (!r.ok) throw new Error("load failed");
+            return r.json();
+        }).then(j => {
+            const el = document.getElementById("autotune-mild");
+            if (el && j && (j.autotune === 1 || j.autotune === "1"))
+                el.checked = true;
+        }).catch(() => {});
+    }
+    function onAftermarketChange(el) {
+        if (el.checked && !confirm("Aftermarket PSU only. This raises the software power cap from 140 W to 150 W. The included USB-PD adapter is not rated for this. Continue?")) {
+            el.checked = false;
+            return;
+        }
+        const on = el.checked ? "1" : "0";
+        fetch("/api/v1/psu-cap", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: "aftermarket_psu=" + on
+        }).then(r => {
+            if (!r.ok) throw new Error("save failed");
+        }).catch(() => {
+            el.checked = !el.checked;
+            alert("Could not save the power cap");
+        });
+    }
+    function loadAftermarketPsu() {
+        fetch("/api/v1/psu-cap", { cache: "no-store" }).then(r => {
+            if (!r.ok) throw new Error("load failed");
+            return r.json();
+        }).then(j => {
+            const el = document.getElementById("aftermarket-psu");
+            if (el && j && (j.aftermarket_psu === 1 || j.aftermarket_psu === "1"))
+                el.checked = true;
+        }).catch(() => {});
+    }
     function updateDashboard(isTimeout) {
         let oUpdate;
         oUpdate = new AJAX("/api/v1/dashboard?num=" + Math.random(),
@@ -618,6 +677,8 @@
     }
     loadLcdDisplay();
     loadWifiEth();
+    loadAutotune();
+    loadAftermarketPsu();
     updateDashboard(true);
 </script>
 </html>

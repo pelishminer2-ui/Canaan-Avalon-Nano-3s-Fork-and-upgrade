@@ -730,6 +730,22 @@ int main(void)
     rig_bringup_replay();
     rig2_bringup_replay();
 
+    fan_pid_params_t band = { .temp_min = FAN_PID_TEMP_MIN - 10, .temp_max = FAN_PID_TEMP_MAX + 20,
+        .p = FAN_PID_P };
+    assert(fan_pid_clamp_band(&band, FAN_PID_TEMP_MIN, FAN_PID_TEMP_MAX) == 1);
+    assert(band.temp_min == FAN_PID_TEMP_MIN && band.temp_max == FAN_PID_TEMP_MAX);
+    assert(band.p == FAN_PID_P);
+    assert(fan_pid_clamp_band(&band, FAN_PID_TEMP_MIN, FAN_PID_TEMP_MAX) == 0);
+#if defined(BOARD_NANO3S_H)
+    assert(PVT_TEMP_OVER_HR_MAX == 113);
+    assert(HASHOUT_OVER_HR_MAX == 95);
+    assert(FAN_PID_TEMP_MAX == 100);
+    assert(FAN_PID_P_MILD > FAN_PID_P);
+    band.temp_max = PVT_TEMP_OVER_HR_MAX + 5;
+    assert(fan_pid_clamp_band(&band, FAN_PID_TEMP_MIN, FAN_PID_TEMP_MAX) == 1);
+    assert(band.temp_max == FAN_PID_TEMP_MAX);
+#endif
+
     printf("fan-pid rule goldens OK (%s)\n", BOARD_NAME);
     return 0;
 }

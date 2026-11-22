@@ -47,6 +47,10 @@ static const struct cfg_key g_keys[] = {
     { "syscfg", "subreason", 0, FEAT_BASE },
     { "syscfg", "ledmode", 0, FEAT_LED },
     { "syscfg", "timezone", 0, FEAT_BASE },
+#ifdef AUTOTUNE_DEFAULT
+    { "syscfg", "autotune", 0, FEAT_BASE },
+    { "syscfg", "aftermarket_psu", 0, FEAT_BASE },
+#endif
     { "hwcfg", "prod", 0, FEAT_BASE },
     { "hwcfg", "model", 0, FEAT_BASE },
     { "led", "effect", 0, FEAT_LED },
@@ -124,6 +128,11 @@ int main(void)
             "reason and subreason are the power-on boot reason");
     CHECK(str_is("syscfg", "timezone", FACTORY_TIMEZONE), "timezone is FACTORY_TIMEZONE %s",
             FACTORY_TIMEZONE);
+#ifdef AUTOTUNE_DEFAULT
+    CHECK(num_is("syscfg", "autotune", AUTOTUNE_DEFAULT) && AUTOTUNE_DEFAULT == 0,
+            "autotune defaults off");
+    CHECK(num_is("syscfg", "aftermarket_psu", 0), "aftermarket PSU cap defaults off");
+#endif
     if (feature_on(FEAT_LED))
         CHECK(num_is("syscfg", "ledmode", mm_led_cfg_default.ledmode) &&
                         num_is("led", "effect", mm_led_cfg_default.effect) &&

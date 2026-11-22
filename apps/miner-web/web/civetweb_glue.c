@@ -27,6 +27,7 @@
 #include "webstatus.h"
 #include "ini.h"
 #include "ini_file.h"
+#include "board_nano3s.h"
 #include <civetweb.h>
 #include "upload.h"
 #include <fcntl.h>
@@ -150,6 +151,33 @@ static int wifi_eth_set_cfg(int on)
     if (!g_systemcfg)
         return 0;
     return ini_file_update(g_systemcfg, wifi_eth_write_cb, &v) == 0;
+}
+
+static int syscfg_flag_write(ini_t *ini, void *ctx)
+{
+    const char *const *kv = ctx;
+    return ini_set(ini, "syscfg", kv[0], kv[1]);
+}
+
+static int syscfg_flag_set(const char *key, int on)
+{
+    const char *kv[2];
+
+    if (!g_systemcfg || !key)
+        return 0;
+    kv[0] = key;
+    kv[1] = on ? "1" : "0";
+    return ini_file_update(g_systemcfg, syscfg_flag_write, kv) == 0;
+}
+
+static int autotune_set_cfg(int mode)
+{
+    return syscfg_flag_set("autotune", mode);
+}
+
+static int aftermarket_psu_set_cfg(int on)
+{
+    return syscfg_flag_set("aftermarket_psu", on);
 }
 
 static void telemetry_refresh_maybe(const char *path)
@@ -523,8 +551,10 @@ static int on_request(struct mg_connection *c, void *cbdata)
             memcpy(nonce, qr_token, 8);
     }
     web_ctx ctx    = g_ctx;
-    ctx.lcd_pelish = lcd_pelish_from_cfg(g_systemcfg);
-    ctx.wifi_eth   = wifi_eth_from_cfg(g_systemcfg);
+    ctx.lcd_pelish       = lcd_pelish_from_cfg(g_systemcfg);
+    ctx.wifi_eth         = wifi_eth_from_cfg(g_systemcfg);
+    ctx.autotune         = cfg_flag(g_systemcfg, "syscfg", "autotune");
+    ctx.aftermarket_psu  = cfg_flag(g_systemcfg, "syscfg", "aftermarket_psu");
     ctx.telemetry  = tel_ok ? &tel.dash : NULL;
     ctx.dna        = tel.dna[0] ? tel.dna : NULL;
     ctx.creds      = have_creds ? &creds : NULL;
@@ -722,7 +752,12 @@ static struct mg_context *web_start(const char *port, const char *systemcfg_ini)
     g_ctx.reboot    = device_reboot;
     g_ctx.tz_get       = device_tz_get;
     g_ctx.tz_set       = device_tz_set;
-    g_ctx.wifi_eth_set = wifi_eth_set_cfg;
+    g_ctx.wifi_eth_set          = wifi_eth_set_cfg;
+    g_ctx.autotune_set          = autotune_set_cfg;
+    g_ctx.aftermarket_psu_set   = aftermarket_psu_set_cfg;
+    g_ctx.power_cap_stock_w     = PD_STOCK_CAP_W;
+    g_ctx.power_cap_aftermarket_w = PD_AFTERMARKET_CAP_W;
+    g_ctx.power_cap_fault_w     = MAX_POUT_LIMIT_ABNORMAL;
     snprintf(threads, sizeof threads, "%d", WEB_NUM_THREADS);
     snprintf(ports, sizeof ports, "%s,%ss,%sso", port, WEB_HTTPS_PORT, WEB_REST_PORT);
 

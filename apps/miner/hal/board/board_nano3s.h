@@ -74,6 +74,30 @@
 /* output power the servo accepts below the row max_pout, negative, W */
 #define POUT_DOWN_LIMIT         (-2)
 #define MAX_POUT_LIMIT_ABNORMAL (155) /* invalid reading above this; a run latches a fault, W */
+/*
+ * Stock USB-PD software ceiling. Mode 2 cali is 133 W; 133 + PD_POWER_RESERVE_W
+ * fits this adapter. A larger PD advertisement is clamped here unless the
+ * aftermarket opt-in is on.
+ */
+#define PD_STOCK_CAP_W       (140u)
+/*
+ * Mean Well LRS-150-class software ceiling. Stays under MAX_POUT_LIMIT_ABNORMAL,
+ * including the servo's POUT_UP_LIMIT: 150 + 1 < 155. Not a chip-damage change.
+ */
+#define PD_AFTERMARKET_CAP_W (150u)
+/*
+ * Mild board autotune. 0 leaves aging and the V/F search in charge.
+ * Multi-chip on this board means every A3197S die asic_miner already drives,
+ * not a BM1370 chain. Steps use the Canaan PLL interval only.
+ */
+#define AUTOTUNE_OFF            0
+#define AUTOTUNE_MILD           1
+#define AUTOTUNE_DEFAULT        AUTOTUNE_OFF
+#define AUTOTUNE_TEMP_MARGIN_C  6 /* degC under the cali fan target before a step up */
+#define AUTOTUNE_POWER_MARGIN_W 5 /* watts under the active ceiling before a step up */
+#define AUTOTUNE_MILD_STEPS     2 /* PLL intervals the mild tune may sit above pll_start */
+/* Fan P gain while mild cooling is on. The temperature band is not moved. */
+#define FAN_PID_P_MILD ((FAN_PID_P) + 8)
 #define WORK_MODE_DEFAULT_ID    2
 #define WORK_LEVEL_COUNT        1 /* work levels per work mode */
 /* Inclusive [lo, hi] spans of the work modes ascset workmode and work_mode_lvl accept. */
@@ -98,5 +122,18 @@
     CTRL_OP_FILTER_CLEAN, CTRL_OP_LCD, CTRL_OP_SOFTON, \
     CTRL_OP_SOFTOFF, CTRL_OP_SETTZ, CTRL_OP_WP_RELOAD, CTRL_OP_REBOOT
 /* clang-format on */
+
+_Static_assert(PD_STOCK_CAP_W == 140u, "stock PD software cap is the 140 W adapter");
+_Static_assert(PD_AFTERMARKET_CAP_W > PD_STOCK_CAP_W,
+        "aftermarket cap is above the stock PD cap");
+_Static_assert(PD_AFTERMARKET_CAP_W < MAX_POUT_LIMIT_ABNORMAL,
+        "aftermarket cap stays under the power-fault trip");
+_Static_assert(PD_AFTERMARKET_CAP_W + POUT_UP_LIMIT < MAX_POUT_LIMIT_ABNORMAL,
+        "servo headroom above the aftermarket cap stays under the power-fault trip");
+_Static_assert(AUTOTUNE_DEFAULT == AUTOTUNE_OFF, "autotune defaults off");
+_Static_assert(FAN_PID_P_MILD > FAN_PID_P, "mild cooling does not reduce the P gain");
+_Static_assert(PVT_TEMP_OVER_HR_MAX == 113, "chip thermal trip stays 113 C");
+_Static_assert(HASHOUT_OVER_HR_MAX == 95, "outlet thermal trip stays 95 C");
+_Static_assert(FAN_PID_TEMP_MAX == 100, "fan band top stays 100 C");
 
 #endif /* BOARD_NANO3S_H */

@@ -88,6 +88,33 @@ void fan_pid_set_fixed(fan_pid_state_t *st, int duty_pct)
     st->fixed_duty = duty_pct;
 }
 
+int fan_pid_clamp_band(fan_pid_params_t *pp, int band_min, int band_max)
+{
+    int clamped = 0;
+
+    if (!pp)
+        return 0;
+    if (band_min > band_max) {
+        int swap = band_min;
+        band_min = band_max;
+        band_max = swap;
+    }
+    if (pp->temp_min < band_min) {
+        pp->temp_min = band_min;
+        clamped      = 1;
+    }
+    if (pp->temp_max > band_max) {
+        pp->temp_max = band_max;
+        clamped      = 1;
+    }
+    if (pp->temp_min > pp->temp_max) {
+        pp->temp_min = band_min;
+        pp->temp_max = band_max;
+        clamped      = 1;
+    }
+    return clamped;
+}
+
 int fan_pid_pick_input(int tavg, int tmax, const int *outlet, int n)
 {
     int max = ASIC_TEMP_NONE;

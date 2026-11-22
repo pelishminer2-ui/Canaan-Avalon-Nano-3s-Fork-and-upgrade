@@ -168,6 +168,14 @@ __attribute__((weak)) void mm_factory_boot_seed(void)
 __attribute__((weak)) void mm_factory_boot_fill(void)
 {
 }
+__attribute__((weak)) int mm_tune_autotune(void)
+{
+    return 0;
+}
+__attribute__((weak)) int mm_tune_aftermarket(void)
+{
+    return 0;
+}
 __attribute__((weak)) int mm_cfgstore_get(const char *section, const char *key, char *buf,
         size_t cap)
 {

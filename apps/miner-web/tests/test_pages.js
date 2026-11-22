@@ -563,6 +563,15 @@ const flush = async () => {
     assert(dash.includes('/api/v1/lcd-display'), 'dashboard missing lcd-display API');
     assert(dash.includes('id="wifi-eth-keep"'), 'dashboard missing keep-Wi-Fi checkbox');
     assert(dash.includes('/api/v1/wifi-eth'), 'dashboard missing wifi-eth API');
+    assert(dash.includes('id="autotune-mild"'), 'dashboard missing mild autotune checkbox');
+    assert(dash.includes('/api/v1/autotune'), 'dashboard missing autotune API');
+    assert(dash.includes('id="aftermarket-psu"'), 'dashboard missing aftermarket PSU checkbox');
+    assert(dash.includes('/api/v1/psu-cap'), 'dashboard missing psu-cap API');
+    assert(dash.includes('Aftermarket PSU only'), 'dashboard missing aftermarket PSU warning');
+    assert(dash.includes('140 W'), 'dashboard missing stock 140 W cap');
+    assert(dash.includes('150 W'), 'dashboard missing 150 W aftermarket cap');
+    assert(dash.includes('155 W'), 'dashboard missing 155 W fault trip');
+    assert(!dash.includes('BM1370'), 'dashboard must not mention BM1370');
     assert(!dash.includes('Canaan-Avalon-Nano-3s-6TH'), 'dashboard must not use the chassis photo');
 
     function pngAlphaZero(buf) {

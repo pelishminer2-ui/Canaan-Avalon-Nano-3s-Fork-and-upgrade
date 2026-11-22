@@ -74,6 +74,13 @@ typedef struct {
     int lcd_pelish;                       /* 1: LAN UI Pelish LCD rotation */
     int wifi_eth;                         /* 1: keep Wi-Fi up with USB Ethernet */
     int (*wifi_eth_set)(int on);          /* persist wifi_eth: 1 ok, 0 refused */
+    int autotune;                         /* 0 off, 1 mild A3197S board tune */
+    int aftermarket_psu;                  /* 1: raise the stock PD software cap */
+    int power_cap_stock_w;                /* stock software cap, W */
+    int power_cap_aftermarket_w;          /* aftermarket software cap, W */
+    int power_cap_fault_w;                /* power-fault trip, W */
+    int (*autotune_set)(int mode);        /* persist autotune: 1 ok, 0 refused */
+    int (*aftermarket_psu_set)(int on);   /* persist aftermarket_psu: 1 ok, 0 refused */
 } web_ctx;
 
 int              web_route(const web_request *req, const web_ctx *ctx, char *out, size_t cap,

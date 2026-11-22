@@ -20,6 +20,9 @@
 #include "boardconf.h"
 #include "pout_reg.h"
 #include "aging.h"
+#include "autotune.h"
+#include "mm_tune.h"
+#include "power_cap.h"
 #include "psu_ops.h"
 
 #include <pthread.h>
@@ -37,6 +40,7 @@
 #define AGING_FIRST_RUN_MS       (2u * AGING_PERIOD_MS) /* delay before the first aging step, ms */
 #define PRE_WORK_TICK_MS         500u                   /* V/F loop period before in-work, ms */
 #define VOLT_REG_PERIOD_MS       5000u                  /* power regulation period, ms */
+#define AUTOTUNE_PERIOD_MS       60000u                 /* mild frequency step period, ms */
 
 static pthread_mutex_t  g_vf_lock = PTHREAD_MUTEX_INITIALIZER;
 static _Atomic int      g_vf_run  = 1;
@@ -70,6 +74,7 @@ static _Atomic int      g_asic_respawned;
 static int              g_seed_respawn; /* next seed follows an asic_miner spawn flag */
 static _Atomic uint16_t g_volt_req;
 static _Atomic int      g_aging_on;
+static _Atomic uint16_t g_tuned_freq; /* mild autotune hold, MHz; 0 follows the ramp */
 
 /* VOLT-REG servo state. MAX_LIMIT_ONLY is held once per process: a mode
  * switch takes the new mode's budget and settled rail and keeps the stage. */
@@ -96,12 +101,7 @@ static struct {
 
 static uint16_t pout_budget(uint16_t row)
 {
-    uint16_t lim = mm_power_budget();
-
-    if (!lim)
-        return row;
-    lim = lim > PD_POWER_RESERVE_W ? (uint16_t)(lim - PD_POWER_RESERVE_W) : 0;
-    return lim < row ? lim : row;
+    return power_cap_servo(row, mm_power_budget(), mm_tune_aftermarket());
 }
 
 void mm_vf_set_ramp_target(uint16_t base, uint8_t at_target)
@@ -340,14 +340,19 @@ static int mode_tick(void)
     if (g_switch_ramp_base && req != g_switch_ramp_base)
         g_switch_ramp_base = 0;
     if (req && req != g_tgt_freq && !g_freq_held && !g_switch_ramp_base) {
-        g_tgt_freq     = req;
-        g_mode_settled = 0;
-        osif_log(OSIF_LOG_DBG, "freq tgt %u MHz, now at %u MHz", (unsigned)req,
-                (unsigned)g_work_freq);
+        uint16_t tuned = atomic_load(&g_tuned_freq);
+        /* The ramp names the cali start. A mild tune above that start stays. */
+        if (!(tuned && req < g_tgt_freq && mm_tune_autotune() == AUTOTUNE_MILD)) {
+            g_tgt_freq     = req;
+            g_mode_settled = 0;
+            osif_log(OSIF_LOG_DBG, "freq tgt %u MHz, now at %u MHz", (unsigned)req,
+                    (unsigned)g_work_freq);
+        }
     }
 
     uint8_t want = mm_workmode_running();
     if (want != g_workmode) {
+        atomic_store(&g_tuned_freq, 0);
         int keep_held = g_workmode == MODE_UNSET && g_freq_held;
         int announced = g_workmode == MODE_UNSET && !keep_held && want == g_mode_announced;
         g_workmode    = want;
@@ -684,6 +689,59 @@ static void aging_cadence(double ghs, const board_power *pw)
     }
 }
 
+/* One Canaan PLL-interval step for the whole A3197S board, after aging or cali. */
+static void autotune_cadence(const board_power *pw)
+{
+    static uint32_t next_at;
+    int             mode = mm_tune_autotune();
+
+    if (mode != AUTOTUNE_MILD) {
+        atomic_store(&g_tuned_freq, 0);
+        next_at = 0;
+        return;
+    }
+    if (g_freq_held || !g_mode_settled || aging_running() || !g_work_freq)
+        return;
+
+    uint32_t now = (uint32_t)osif_now_ms();
+    if (next_at && (int32_t)(now - next_at) < 0)
+        return;
+    next_at = now + AUTOTUNE_PERIOD_MS;
+
+    cali_param cp;
+    uint8_t    aged = 0;
+    cali_resolve(CALI_INI_PATH, g_board.max_asic, g_workmode, 0, &cp, &aged);
+    mm_telem_t tel;
+    mm_telem_get(&tel);
+    uint16_t interval = cp.pll_interval ? cp.pll_interval : g_board.freq_interval;
+    autotune_in in = {
+        .mode         = mode,
+        .settled      = aged || g_aged_mode == g_workmode,
+        .pll_start    = cp.pll_start,
+        .pll_interval = interval,
+        .freq         = g_work_freq,
+        .temp_known   = tel.tmax > ASIC_TEMP_NONE,
+        .temp_c       = tel.tmax,
+        .temp_target  = cp.temp,
+        .temp_fan_max = FAN_PID_TEMP_MAX,
+        .temp_trip    = PVT_TEMP_OVER_HR_MAX,
+        .power_known  = pw != NULL,
+        .pout_w       = pw ? pw->pout_w : 0,
+        .pout_cap_w   = pout_budget(cp.max_pout),
+    };
+    autotune_out out;
+    autotune_step(&in, &out);
+    if (!out.step || out.freq == g_work_freq)
+        return;
+    if (!set_work_freq(out.freq))
+        return;
+    g_tgt_freq = out.freq;
+    atomic_store(&g_tuned_freq, out.freq);
+    osif_log(OSIF_LOG_OP,
+            "autotune %s to %u MHz on the A3197S board (Canaan PLL interval %u)",
+            out.step > 0 ? "up" : "down", (unsigned)out.freq, (unsigned)interval);
+}
+
 static int power_poll(board_power *pw)
 {
     if (board_power_read(pw) != 0)
@@ -733,6 +791,7 @@ static uint32_t vf_tick(int *was_live, int *pre_work)
             if (!mode_tick())
                 volt_reg_tick(sample);
             aging_cadence(ghs, sample);
+            autotune_cadence(sample);
         } else {
             uint16_t req;
             uint8_t  at;

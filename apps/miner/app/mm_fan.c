@@ -18,6 +18,8 @@
 #include "thermal.h"
 #include "cali.h"
 #include "board_desc.h"
+#include "autotune.h"
+#include "mm_tune.h"
 #include "osif.h"
 
 #include <pthread.h>
@@ -36,7 +38,7 @@ static uint64_t g_fan_retry_ms;                         /* last fan controller r
 static thermal_telem_state_t g_fan_tel;                 /* chip temperature freshness state */
 
 /* fan PID parameters; fan_min/fan_max on the 0..0x3ff PID output scale */
-static const fan_pid_params_t g_fan_pp = {
+static fan_pid_params_t g_fan_pp = {
     .p              = FAN_PID_P,
     .i              = FAN_PID_I,
     .d              = FAN_PID_D,
@@ -154,7 +156,20 @@ void fan_rule(void *ctx, uint64_t now_ms)
                 "to automatic control");
 
     int duty_x10 = 0, changed = 0;
+    int mild     = 0;
+#ifdef FAN_PID_P_MILD
+    mild = mm_tune_autotune() == AUTOTUNE_MILD;
+#endif
     pthread_mutex_lock(&g_fan_lock);
+#ifdef FAN_PID_P_MILD
+    g_fan_pp.p = mild ? (float)FAN_PID_P_MILD : (float)FAN_PID_P;
+#else
+    (void)mild;
+    g_fan_pp.p = FAN_PID_P;
+#endif
+    g_fan_pp.temp_min = FAN_PID_TEMP_MIN;
+    g_fan_pp.temp_max = FAN_PID_TEMP_MAX;
+    (void)fan_pid_clamp_band(&g_fan_pp, FAN_PID_TEMP_MIN, FAN_PID_TEMP_MAX);
     fan_pid_step(&g_fan_st, &g_fan_pp, (float)cur_temp, g_fan_target_temp, fan_dev_last_duty_x10(),
             &duty_x10, &changed);
     pthread_mutex_unlock(&g_fan_lock);
