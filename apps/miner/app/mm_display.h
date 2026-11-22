@@ -21,6 +21,9 @@
 #define MM_LCD_BRIGHT    1 /* mm_display_lcd id: brightness, percent */
 #define MM_LCD_SHOW      2 /* mm_display_lcd id: regular screen, UI_SUMMARY..UI_WALLPAPER */
 #define MM_LCD_WALLPAPER 4 /* mm_display_lcd id: 1 reloads the wallpaper image */
+#define MM_LCD_PELISH    5 /* mm_display_lcd id: 1 rotates Pelish coin with stock screens */
+
+#define MM_LCD_ROTATE_S 180 /* home-cycle period with Pelish rotation enabled, seconds */
 
 /* screen state reported to core_miner */
 typedef struct {
@@ -28,6 +31,7 @@ typedef struct {
     uint8_t  onoff;  /* screen on 1, off 0 */
     uint16_t bright; /* last brightness set by MM_LCD_BRIGHT, percent */
     uint8_t  volume; /* beeper volume, percent */
+    uint8_t  pelish; /* 1: 3-minute cycle includes the Pelish coin screen */
 } mm_display_state;
 
 #ifdef SUPPORT_LCD

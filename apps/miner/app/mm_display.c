@@ -27,10 +27,11 @@
 
 static pthread_mutex_t  display_lock = PTHREAD_MUTEX_INITIALIZER;
 static mm_display_state display      = { .show = UI_SUMMARY, .onoff = 1, .volume = 100 };
+static unsigned         rotate_s; /* seconds on the current regular screen, Pelish cycle */
 
 static int save_lcd(void)
 {
-    int result = mm_ui_cfg_save(display.show, display.onoff);
+    int result = mm_ui_cfg_save(display.show, display.onoff, display.pelish);
     if (result != 0 && !mm_cfgstore_frozen())
         osif_log(OSIF_LOG_ERR, "LCD settings NOT persisted");
     return result;
@@ -45,7 +46,10 @@ int mm_display_start(void)
     display             = (mm_display_state){ .show = UI_SUMMARY, .onoff = 1, .volume = 100 };
     uint16_t file_show  = UI_OFF;
     int      file_onoff = -1;
-    mm_ui_cfg_load(&file_show, &file_onoff);
+    int      file_pelish = -1;
+    mm_ui_cfg_load(&file_show, &file_onoff, &file_pelish);
+    if (file_pelish >= 0)
+        display.pelish = (uint8_t)file_pelish;
     if (file_show != UI_OFF)
         display.show = file_show;
     if (file_onoff >= 0)
@@ -56,6 +60,7 @@ int mm_display_start(void)
         int volume     = atoi(value);
         display.volume = (uint8_t)(volume < 0 ? 0 : volume > 100 ? 100 : volume);
     }
+    ui_set_pelish_rotate(display.pelish);
     ui_seed_regular(display.show);
     ui_show_update(UI_ACT_SWITCH, display.show);
     ui_set_brightness(100);
@@ -64,7 +69,8 @@ int mm_display_start(void)
         ui_show_update(UI_ACT_ADD, UI_HI);
     beep_volume(display.volume);
     int result = 0;
-    if (display.show != file_show || display.onoff != file_onoff)
+    if (display.show != file_show || display.onoff != file_onoff ||
+            (file_pelish >= 0 && display.pelish != (uint8_t)file_pelish))
         result = save_lcd();
     pthread_mutex_unlock(&display_lock);
     return result;
@@ -89,10 +95,21 @@ int mm_display_lcd(int id, int value)
         result = ui_switch_regular((uint16_t)value, &settled);
         if (result == 0) {
             display.show = settled;
+            rotate_s     = 0;
             save_lcd();
         }
     } else if (id == MM_LCD_WALLPAPER && value == 1) {
         ui_show_wallpaper_reload();
+    } else if (id == MM_LCD_PELISH && (value == 0 || value == 1)) {
+        display.pelish = (uint8_t)value;
+        ui_set_pelish_rotate(display.pelish);
+        rotate_s       = 0;
+        if (!display.pelish && ui_get_regular() == UI_PELISH) {
+            uint16_t settled;
+            if (ui_switch_regular(UI_SUMMARY, &settled) == 0)
+                display.show = settled;
+        }
+        save_lcd();
     }
     pthread_mutex_unlock(&display_lock);
     return result;
@@ -116,8 +133,10 @@ void mm_display_night(int dark)
 void mm_display_cycle(void)
 {
     pthread_mutex_lock(&display_lock);
-    if (display.onoff)
+    if (display.onoff) {
+        rotate_s = 0;
         ui_show_update(UI_ACT_SWITCH, 0);
+    }
     pthread_mutex_unlock(&display_lock);
 }
 
@@ -128,6 +147,19 @@ void mm_display_tick(void)
     if (show != display.show) {
         display.show = show;
         save_lcd();
+    }
+    if (display.onoff && display.pelish) {
+        unsigned n = (unsigned)(UI_WALLPAPER - UI_SUMMARY + 1) + 1u;
+        unsigned step = MM_LCD_ROTATE_S / n;
+
+        if (step == 0)
+            step = 1;
+        if (++rotate_s >= step) {
+            rotate_s = 0;
+            ui_show_update(UI_ACT_SWITCH, 0);
+        }
+    } else {
+        rotate_s = 0;
     }
     pthread_mutex_unlock(&display_lock);
 }

@@ -75,6 +75,10 @@ void ui_show_wallpaper_reload(void)
 {
     reloads++;
 }
+void ui_set_pelish_rotate(int on)
+{
+    (void)on;
+}
 void beep_volume(int pct)
 {
     volume = pct;
@@ -139,6 +143,12 @@ int main(void)
     assert(mm_display_lcd(2, 99) == 0 && regular == 2);
     assert(mm_display_lcd(3, 1) == 0 && regular == 2);
     assert(mm_display_lcd(4, 1) == 0 && reloads == 1);
+    assert(mm_display_lcd(5, 1) == 0);
+    mm_display_snapshot(&state);
+    assert(state.pelish == 1);
+    assert(mm_display_lcd(5, 0) == 0);
+    mm_display_snapshot(&state);
+    assert(state.pelish == 0);
     mm_display_night(1);
     assert(night == 1);
     mm_display_snapshot(&state);

@@ -23,6 +23,7 @@ static const ui_show ui_const_table[UI_SHOW_MAX] = {
     [UI_SUMMARY]        = { UI_SUMMARY, UI_CLEAR_INVALID },
     [UI_TIME]           = { UI_TIME, UI_CLEAR_INVALID },
     [UI_WALLPAPER]      = { UI_WALLPAPER, UI_CLEAR_INVALID },
+    [UI_PELISH]         = { UI_PELISH, UI_CLEAR_INVALID },
     [UI_CONFIG_NETWORK] = { UI_CONFIG_NETWORK, UI_CLEAR_TRANSFER },
     [UI_LOST_CONNECT]   = { UI_LOST_CONNECT, UI_CLEAR_TRANSFER },
     [UI_POWER_ERR]      = { UI_POWER_ERR, UI_CLEAR_NO },
@@ -54,6 +55,32 @@ static const struct {
     { UI_AGING_ERR, "E-08", "Aging Failed" },
     { UI_POWER_FAULT, "E-09", "Power Fault" },
 };
+
+static int g_pelish_rotate; /* 1: home cycle includes UI_PELISH */
+
+void ui_set_pelish_rotate(int on)
+{
+    g_pelish_rotate = on ? 1 : 0;
+}
+
+int ui_get_pelish_rotate(void)
+{
+    return g_pelish_rotate;
+}
+
+static uint16_t cycle_next(uint16_t id)
+{
+    uint16_t nid = (uint16_t)(id + 1);
+
+    if (nid >= UI_N_MAX)
+        nid = UI_SUMMARY;
+    if (!g_pelish_rotate && nid == UI_PELISH) {
+        nid = (uint16_t)(nid + 1);
+        if (nid >= UI_N_MAX)
+            nid = UI_SUMMARY;
+    }
+    return nid;
+}
 
 int ui_errcode(uint16_t id, const char **code, const char **desc)
 {
@@ -158,11 +185,10 @@ void ui_show_switch(ui_dispatch *d, int16_t id)
     uint16_t nid;
     if (id > 0)
         nid = (uint16_t)id;
-    else {
-        nid = (uint16_t)(d->regular.id + 1);
-        if (nid >= UI_N_MAX)
-            nid = UI_SUMMARY;
-    }
+    else
+        nid = cycle_next(d->regular.id);
+    if (!g_pelish_rotate && nid == UI_PELISH)
+        nid = UI_SUMMARY;
     d->regular = *ui_show_desc(nid);
 }
 
