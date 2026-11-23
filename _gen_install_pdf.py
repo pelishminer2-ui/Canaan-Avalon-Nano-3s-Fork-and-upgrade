@@ -805,13 +805,15 @@ def page_overview(c, a):
     text(c, "Avalon Device", mx + 54 + cw, fy + fh - 28, "B", 9, INK)
     draw_theme(c, mx + mw - 102, fy + fh - 34)
 
-    check_y = fy + fh - th - 28
+    check_y = fy + fh - th - 20
     draw_check(c, mx + 12, check_y, "Pelish logo rotation")
-    draw_check(c, mx + 158, check_y, "Keep Wi-Fi on with Ethernet")
+    draw_check(c, mx + 150, check_y, "Keep Wi-Fi on with Ethernet")
+    draw_check(c, mx + 12, check_y - 18, "Mild autotune")
+    draw_check(c, mx + 150, check_y - 18, "Aftermarket PSU 150 W")
 
     call_h = 52
     call_y = fy + 12
-    top_limit = check_y - 14
+    top_limit = check_y - 34
     bot_limit = call_y + call_h + 12
     gap = 8
     row_h = (top_limit - bot_limit - gap) / 2.0
@@ -865,8 +867,8 @@ def page_overview(c, a):
     sentences(c, [
         "Both logos stay on the page. Light or Dark is at the top.",
         "Overview is the Avalon home: hash rate, power, and the pool.",
-        "Pelish logo rotation is off. Wi-Fi stays off with Ethernet until you check it.",
-        "The next file is a .aup on Upgrade. Do not flash Mujina.",
+        "Pelish rotation, Wi-Fi with Ethernet, and mild autotune start off.",
+        "Aftermarket PSU is off. Check it only to raise 140 W to 150 W.",
     ], 36, 168, 540, 12.5, 15, 4)
 
 
