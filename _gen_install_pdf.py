@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""One-path picture guide: first Pelish write on a factory Avalon Nano 3s."""
+"""Picture guide: build Pelish firmware and write it to an Avalon Nano 3s."""
 
 import io
 import math
@@ -12,11 +12,12 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 
-OUT = r"G:\cyber tools\3s\Nano3s-pelish-install.pdf"
-STAGING = r"G:\cyber tools\3s\_pelish_install_staging.pdf"
-PHOTO = r"G:\cyber tools\3s\Canaan-Avalon-Nano-3s-6TH.png"
-PELISH = r"G:\cyber tools\3s\apps\miner-web\assets\pelish-logo.png"
-CANAAN = r"G:\cyber tools\3s\apps\miner-web\assets\canaan-logo.png"
+ROOT = os.path.dirname(os.path.abspath(__file__))
+OUT = os.path.join(ROOT, "Nano3s-pelish-install.pdf")
+STAGING = os.path.join(ROOT, "_pelish_install_staging.pdf")
+PHOTO = os.path.join(ROOT, "Canaan-Avalon-Nano-3s-6TH.png")
+PELISH = os.path.join(ROOT, "apps", "miner-web", "assets", "pelish-logo.png")
+CANAAN = os.path.join(ROOT, "apps", "miner-web", "assets", "canaan-logo.png")
 
 W, H = 612, 792
 PAGES = 8
@@ -106,6 +107,13 @@ def center(c, s, x, y, font="S", size=11, color=INK):
     c.setFont(font, size)
     c.setFillColor(color)
     c.drawCentredString(x, y, s)
+
+
+def mono(c, s, x, y, max_w, size=9, color=INK):
+    sz = size
+    while sz > 6 and c.stringWidth(s, "M", sz) > max_w:
+        sz -= 0.25
+    text(c, s, x, y, "M", sz, color)
 
 
 def para(c, s, x, y, width, font="S", size=13, color=INK, leading=17):
@@ -361,32 +369,25 @@ def draw_check(c, x, y, label):
 def page_cover(c, a):
     background(c)
     footer(c, 1)
-    bookmark(c, 1, "Embedded mode")
+    bookmark(c, 1, "Embedded install")
     c.drawImage(a["pelish"], W - 72, H - 68, 38, 38, mask="auto")
-    text(c, "EMBEDDED MODE", 36, 746, "B", 13, GOLD_D)
-    text(c, "Write this image onto the Nano 3S control board", 36, 722, "B", 14, INK)
-    text(c, "(BOOT + kburn SPI NAND).", 36, 704, "B", 14, INK)
+    text(c, "EMBEDDED INSTALL", 36, 746, "B", 13, GOLD_D)
+    text(c, "Write this firmware onto a Nano 3s", 36, 722, "B", 16, INK)
+    text(c, "(K230). BOOT, then kburn to SPI NAND.", 36, 702, "B", 14, INK)
     para(
         c,
-        "Same dongle USB hole. Not Wi-Fi OTA from factory. Not a Windows service.",
-        36, 678, 540, "S", 11, MUTED, 14,
+        "Clone the repository. Run ./build.sh setup, then ./build.sh nano3s. "
+        "Unpack the image and write it through the Wi-Fi dongle USB hole.",
+        36, 678, 520, "S", 11, MUTED, 14,
     )
     rr(c, 36, 596, 540, 48, 8, fill=RED_S, stroke=RED, sw=1.1)
-    text(
-        c,
-        "This .kdimg does not install on Antminer S19 JPro, KPro, or AM Logic.",
-        48, 624, "B", 9, RED,
-    )
-    text(
-        c,
-        "Canaan Nano 3s SDK fork. Factory kburn. No other custom images. Nano 3s only, not S19.",
-        48, 610, "B", 9, RED,
-    )
+    text(c, "Avalon Nano 3s (K230) only.", 48, 622, "B", 12, RED)
+    text(c, "This image does not install on any other board.", 48, 604, "B", 11, RED)
 
     panels = [
-        (1, "Unplug the dongle", _cover_unplug),
+        (1, "Build the image", _cover_build),
         (2, "Hold BOOT", _cover_boot),
-        (3, "Write your .kdimg", _cover_write),
+        (3, "Write the .kdimg", _cover_write),
         (4, "Ethernet dongle", _cover_lan),
     ]
     pw, ph = 258, 216
@@ -402,12 +403,13 @@ def page_cover(c, a):
         center(c, cap, x + pw / 2, y + 16, "B", 13, INK)
 
 
-def _cover_unplug(c, x, y, w, h):
-    cx, cy = x + w / 2, y + 108
-    draw_slot(c, cx, cy - 10, 1.05)
-    draw_stick(c, cx + 8, cy + 48, 1.15)
-    arrow(c, cx + 8, cy + 18, cx + 8, cy + 36, GREEN, 2.4, 9)
-    center(c, "out", cx + 36, cy + 24, "B", 10, GREEN)
+def _cover_build(c, x, y, w, h):
+    rr(c, x + 22, y + 42, w - 44, 118, 8, fill=CHAR)
+    text(c, "git clone", x + 34, y + 136, "M", 8, GOLD)
+    text(c, "the repository", x + 34, y + 122, "M", 8, C("f4efe4"))
+    text(c, "./build.sh setup", x + 34, y + 100, "M", 9, C("f4efe4"))
+    text(c, "./build.sh nano3s", x + 34, y + 84, "M", 9, GOLD)
+    text(c, "build/images/", x + 34, y + 62, "M", 8, GREEN)
 
 
 def _cover_boot(c, x, y, w, h):
@@ -440,10 +442,10 @@ def _cover_lan(c, x, y, w, h):
     center(c, "same hole", x + 110, y + 78, "B", 10, GREEN)
 
 
-# --- step 1 ---------------------------------------------------------------
+# --- step 2 ---------------------------------------------------------------
 
 def page_holes(c, a):
-    step_header(c, 1, "Find the three holes", 2)
+    step_header(c, 2, "Find the three holes", 3)
     x, y, w, h = 32, 176, 548, 490
     card(c, x, y, w, h, 16, fill=white)
 
@@ -488,56 +490,74 @@ def page_holes(c, a):
 
     sentences(c, [
         "The photo is the top. The black circle is the screen.",
-        "The wide hole on the edge holds the Wi-Fi stick. Data uses that hole only.",
+        "One USB hole holds the Wi-Fi dongle. Data uses that hole only.",
         "The round plug is USB-C. It only brings power.",
         "BOOT is the tiny pinhole. The pale dot beside the screen is not BOOT.",
     ], 36, 156, 540, 13, 16, 5)
 
 
-# --- step 2 ---------------------------------------------------------------
+# --- step 1 ---------------------------------------------------------------
 
 def page_file(c, a):
-    step_header(c, 2, "Get your .kdimg", 3)
+    step_header(c, 1, "Build the image", 2)
     x, y, w, h = 32, 188, 548, 478
     card(c, x, y, w, h, 16, fill=white)
 
-    draw_file(c, x + 196, y + 300, 150, 130, "", GREEN)
-    center(c, ".kdimg", x + 271, y + 368, "B", 22, GREEN)
-    center(c, "write this", x + 271, y + 342, "S", 11, GREEN)
+    draw_file(c, x + 28, y + 378, 118, 74, "", GOLD_D)
+    center(c, ".gz", x + 87, y + 418, "B", 16, GOLD_D)
+    center(c, "unpack", x + 87, y + 398, "S", 10, MUTED)
 
-    # the other two, smaller, so the right file is obvious
-    draw_file(c, x + 36, y + 318, 110, 86, "", C("b9a56a"))
-    center(c, ".aup", x + 91, y + 364, "B", 16, GOLD_D)
-    center(c, "later", x + 91, y + 344, "S", 10, MUTED)
+    draw_file(c, x + 196, y + 362, 150, 100, "", GREEN)
+    center(c, ".kdimg", x + 271, y + 418, "B", 20, GREEN)
+    center(c, "write this", x + 271, y + 394, "S", 11, GREEN)
 
-    rr(c, x + 390, y + 328, 124, 78, 8, fill=RED_S, stroke=RED, sw=1.2)
-    center(c, "other image", x + 452, y + 372, "B", 11, RED)
-    center(c, "do not write", x + 452, y + 352, "S", 10, RED)
+    draw_file(c, x + 396, y + 378, 118, 74, "", BLUE)
+    center(c, ".aup", x + 455, y + 418, "B", 16, BLUE)
+    center(c, "later", x + 455, y + 398, "S", 10, MUTED)
 
-    text(c, "WHERE THE FILE IS", x + 24, y + 268, "B", 8.5, MUTED)
-    box_y = y + 16
-    rr(c, x + 16, box_y, w - 32, 236, 8, fill=SOFT, stroke=LINE, sw=0.8)
+    text(c, "CLONE, BUILD, UNPACK", x + 24, y + 346, "B", 8.5, MUTED)
+    box_y = y + 14
+    box_h = 318
+    rr(c, x + 16, box_y, w - 32, box_h, 8, fill=SOFT, stroke=LINE, sw=0.8)
+    max_w = w - 76
+    tx = x + 30
+    yy = box_y + box_h - 20
     rows = [
-        ("Windows", r"G:\cyber tools\3s\build\images"),
-        ("WSL", "/home/owner/canaan-sdk-nano3s/build/images/"),
-        ("File", "AvalonHome_nano3s_nmm1v1x1_mm319_s1.1.2_m0.3.59_dbg_"),
-        ("", "<date>_<time>_<rev>.kdimg"),
-        ("Unpack", "gunzip -k build/images/AvalonHome_nano3s_….kdimg.gz"),
+        ("label", "CLONE", BLUE),
+        ("mono", "git clone https://github.com/pelishminer2-ui/", INK),
+        ("mono", "  Canaan-Avalon-Nano-3s-Fork-and-upgrade", INK),
+        ("gap", "", INK),
+        ("label", "BUILD", BLUE),
+        ("mono", "cd Canaan-Avalon-Nano-3s-Fork-and-upgrade", INK),
+        ("mono", "./build.sh setup", INK),
+        ("mono", "./build.sh nano3s", INK),
+        ("note", "Linux or Docker, as the README.", MUTED),
+        ("gap", "", INK),
+        ("label", "IMAGES", GREEN),
+        ("mono", "build/images/AvalonHome_nano3s_*.kdimg.gz", INK),
+        ("mono", "build/images/AvalonHome_nano3s_*.aup", INK),
+        ("gap", "", INK),
+        ("label", "UNPACK", GOLD_D),
+        ("mono", "gunzip -k build/images/AvalonHome_nano3s_*.kdimg.gz", INK),
     ]
-    yy = box_y + 210
-    for lab, val in rows:
-        if lab:
-            text(c, lab, x + 30, yy, "B", 8, BLUE)
-            yy -= 14
-        text(c, val, x + 30, yy, "M", 8, INK)
-        yy -= 22
+    for kind, val, color in rows:
+        if kind == "gap":
+            yy -= 8
+            continue
+        if kind == "label":
+            text(c, val, tx, yy, "B", 8, color)
+        elif kind == "note":
+            text(c, val, tx, yy, "S", 9, color)
+        else:
+            mono(c, val, tx, yy, max_w, 9, color)
+        yy -= 16
 
     sentences(c, [
-        "Use the file that ends in .kdimg.",
-        "If you only see .kdimg.gz, unpack it and keep the .kdimg.",
-        "A factory miner will not take the .aup update yet.",
-        "Do not write another custom image.",
-    ], 36, 166, 540, 13, 16, 6)
+        "Clone that repository. setup runs once. nano3s builds this firmware.",
+        "On Linux, ./build.sh follows the README and uses Docker when it must.",
+        "Images land in build/images/ as AvalonHome_nano3s_*.kdimg.gz and .aup.",
+        "gunzip the .kdimg.gz and write that .kdimg. Keep the .aup for later.",
+    ], 36, 166, 540, 12, 15, 4)
 
 
 # --- step 3 ---------------------------------------------------------------
@@ -622,26 +642,23 @@ def page_write(c, a):
     rw = w - 358
     rr(c, rx, ty, rw, th, 10, fill=CHAR)
     text(c, "OR THIS COMMAND", rx + 14, ty + th - 28, "B", 9, GOLD)
+    text(c, "FROM THE CLONE", rx + 14, ty + th - 46, "B", 8, GOLD)
     cmd = [
-        "cd /home/owner/",
-        "  canaan-sdk-nano3s",
-        "",
         "kburn -m nand \\",
         "  build/images/",
-        "  AvalonHome_nano3s_",
-        "  ….kdimg",
+        "  AvalonHome_nano3s_*.kdimg",
     ]
-    yy = ty + th - 58
+    yy = ty + th - 68
     for line in cmd:
-        text(c, line, rx + 14, yy, "M", 9, C("f4efe4"))
-        yy -= 18
+        mono(c, line, rx + 12, yy, rw - 24, 8, C("f4efe4"))
+        yy -= 16
     text(c, "-m nand is SPI NAND.", rx + 14, ty + 52, "S", 9, C("f4efe4"))
     text(c, "Same write.", rx + 14, ty + 28, "B", 14, GOLD)
 
     sentences(c, [
         "Pick your .kdimg, not the .gz.",
         "Set Medium to SPI NAND and Image part to all.",
-        "Start, and wait until the tool says it is finished. The command does the same write.",
+        "Start, and wait until it is finished. The command does the same write from the repo.",
         "Leave the power and the cable plugged in until then.",
     ], 36, 326, 540, 13, 16, 6)
 
@@ -746,7 +763,7 @@ def page_open(c, a):
         "From a computer on the same network, open https:// and the IP on the screen.",
         "Pelish and Canaan are on the login page. Pick Light or Dark.",
         "Log in with admin and admin. If the browser warns you, continue.",
-        "Next you see Overview. Later updates are a .aup, not another custom image.",
+        "Next you see Overview. A later update is the .aup from the same build.",
     ], 36, 148, 540, 12.5, 15, 4)
 
 
@@ -861,31 +878,31 @@ def page_overview(c, a):
     rx = mx + 20 + (mw - 32) / 2
     rw = (mw - 32) / 2
     rr(c, rx, fy + 12, rw, 52, 8, fill=RED_S, stroke=RED, sw=1)
-    center(c, "Do not flash other custom images", rx + rw / 2, fy + 40, "B", 8, RED)
-    center(c, "write the .kdimg again", rx + rw / 2, fy + 24, "S", 8, MUTED)
+    center(c, "Nano 3s K230 only", rx + rw / 2, fy + 40, "B", 9, RED)
+    center(c, "keep this .kdimg", rx + rw / 2, fy + 24, "S", 8, MUTED)
 
     sentences(c, [
         "Both logos stay on the page. Light or Dark is at the top.",
-        "Overview is the Avalon home: hash rate, power, and the pool.",
-        "Pelish rotation, Wi-Fi with Ethernet, and mild autotune start off.",
-        "Aftermarket PSU is off. Check it only to raise 140 W to 150 W.",
+        "Overview shows hash rate, power, fan, temperature, and the pool.",
+        "The four optional boxes start off. Leave them off unless you want them.",
+        "The stock power cap stays 140 W until you check the 150 W box.",
     ], 36, 168, 540, 12.5, 15, 4)
 
 
 def main():
     assets = load_assets()
     c = canvas.Canvas(STAGING, pagesize=(W, H))
-    c.setTitle("Embedded mode: Pelish on Nano 3s")
+    c.setTitle("Embedded install: Pelish on Avalon Nano 3s")
     c.setAuthor("Pelish")
     c.setCreator("Pelish")
     c.setSubject(
-        "EMBEDDED MODE: write this image onto the Nano 3S control board "
-        "(BOOT + kburn SPI NAND). Same dongle USB hole. "
-        "Not Wi-Fi OTA from factory. Not a Windows service. "
-        "Not Antminer S19 JPro, KPro, or AM Logic."
+        "Embedded install for any builder. Avalon Nano 3s (K230) only. "
+        "Clone https://github.com/pelishminer2-ui/Canaan-Avalon-Nano-3s-Fork-and-upgrade "
+        "then ./build.sh setup and ./build.sh nano3s. "
+        "gunzip AvalonHome_nano3s_*.kdimg.gz and kburn it to SPI NAND."
     )
     for fn in (
-        page_cover, page_holes, page_file, page_cable,
+        page_cover, page_file, page_holes, page_cable,
         page_write, page_lan, page_open, page_overview,
     ):
         fn(c, assets)
