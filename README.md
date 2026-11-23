@@ -8,7 +8,7 @@ This repository is the Pelish fork of the Canaan Avalon Nano 3s Linux SDK.
 - One dongle USB port. A USB-to-RJ45 adapter uses that same hole after the Wi-Fi stick comes out.
 - LAN UI in the Avalon Overview style, with Pelish and Canaan logos and light and dark modes.
 - Optional and off by default: LCD Pelish rotation, keep Wi-Fi on with Ethernet, mild autotune, and a 150 W aftermarket PSU cap. The stock software cap stays 140 W.
-- Nano 3s only. This image does not install on Antminer S19, JPro, KPro, AM Logic, or other Mujina targets.
+- Canaan Nano 3s SDK fork. Nano 3s only, not S19. The first write is factory kburn. Do not flash other custom images. This image does not install on Antminer S19, JPro, KPro, or AM Logic.
 
 Canaan SDK (canaan_sdk_for_linux) is a Yocto/OpenEmbedded SDK that builds the Linux firmware of the
 Avalon Miners on the Canaan K230 RISC-V SoC. It holds the Canaan Yocto layers with the K230 patches,

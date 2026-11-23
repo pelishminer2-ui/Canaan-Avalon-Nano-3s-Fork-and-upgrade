@@ -8,8 +8,9 @@ hole is the board's USB host. This is not a PC sidecar and not an SSH-only `mm_m
 **EMBEDDED MODE:** write this image onto the Nano 3S control board (BOOT + kburn SPI NAND).
 Same dongle USB hole. Not Wi-Fi OTA from factory. Not a Windows service.
 
-This `.kdimg` does **not** install on Antminer S19 JPro, KPro, or AM Logic. Those are other
-Mujina targets. This tree is Nano 3S only.
+This `.kdimg` does **not** install on Antminer S19, JPro, KPro, or AM Logic. This tree is a
+Canaan Nano 3s SDK fork. Nano 3s only, not S19. The first write is factory kburn. Do not flash
+other custom images.
 
 Set up the Nano3s Wi-Fi, set its pools, reboot it and check that it mines. API details:
 [MINER.md](miner/MINER.md#4028-api) and [MINER-WEB.md](miner-web/MINER-WEB.md#rest).
@@ -25,10 +26,9 @@ this tree.
 3. Hold **BOOT** (recessed button) while applying power so the ROM enters Canaan burn mode.
 4. Flash **only this SDK's nano3s `.kdimg`** to **SPI-NAND** with Canaan `kburn -m nand` or the
    K230 Burning Tool (`Medium` = SPI NAND, image part `all`). This file does not install on
-   Antminer S19 JPro, KPro, or AM Logic. Never flash Mujina, nano-mujina, HashPower, or any
-   other vendor `.kdimg`.
-5. Do not pull power until the tool reports success. A cut flash is recovered only by kburn
-   again, not by OTA and not by Mujina.
+   Antminer S19. Nano 3s only, not S19. Do not flash other custom images.
+5. Do not pull power until the tool reports success. A cut flash is recovered only by factory
+   kburn of this SDK's `.kdimg` again, not by OTA and not by another custom image.
 6. After the first successful kburn, later pelish builds are **OTA only**: upload the new `.aup`
    on the LAN Upgrade page (or `mmupgrade`). The miner writes the inactive A/B slot and reboots
    into it. Keep the last known-good `.kdimg` for kburn if an OTA slot will not boot.
@@ -37,9 +37,10 @@ First-boot network: provision Wi-Fi with the Avalon app over BLE (`TP1`), or plu
 adapter (hub + Wi-Fi dongle is fine). With Ethernet link and an IPv4 address, Wi-Fi turns off
 unless **Keep Wi-Fi on with Ethernet** is checked. The Avalon app stays on this firmware.
 
-Mujina / nano-mujina is a **working model** (A/B, conservative clocks, keep a recovery image). It
-is **not** recovery firmware for this board and must not be flashed over factory or this SDK.
-S19 JPro, KPro, and AM Logic are other Mujina targets. They are not this tree.
+This tree is a **Canaan Nano 3s SDK fork**. The first write is factory `kburn` of this SDK's
+nano3s `.kdimg`. Do not flash other custom images. Nano 3s only, not S19. S19 JPro, KPro, and
+AM Logic are not this tree. Keep this SDK's `.kdimg` as the recovery image. Another custom image
+is not recovery firmware and must not be flashed over factory or this SDK.
 
 ## Current limitation
 

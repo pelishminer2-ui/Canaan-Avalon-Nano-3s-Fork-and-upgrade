@@ -379,7 +379,7 @@ def page_cover(c, a):
     )
     text(
         c,
-        "Those are other Mujina targets. This tree is Nano 3S only.",
+        "Canaan Nano 3s SDK fork. Factory kburn. No other custom images. Nano 3s only, not S19.",
         48, 610, "B", 9, RED,
     )
 
@@ -511,7 +511,7 @@ def page_file(c, a):
     center(c, "later", x + 91, y + 344, "S", 10, MUTED)
 
     rr(c, x + 390, y + 328, 124, 78, 8, fill=RED_S, stroke=RED, sw=1.2)
-    center(c, "Mujina", x + 452, y + 372, "B", 14, RED)
+    center(c, "other image", x + 452, y + 372, "B", 11, RED)
     center(c, "do not write", x + 452, y + 352, "S", 10, RED)
 
     text(c, "WHERE THE FILE IS", x + 24, y + 268, "B", 8.5, MUTED)
@@ -536,7 +536,7 @@ def page_file(c, a):
         "Use the file that ends in .kdimg.",
         "If you only see .kdimg.gz, unpack it and keep the .kdimg.",
         "A factory miner will not take the .aup update yet.",
-        "Do not write a Mujina file.",
+        "Do not write another custom image.",
     ], 36, 166, 540, 13, 16, 6)
 
 
@@ -738,7 +738,7 @@ def page_open(c, a):
     text(c, "Upload a .aup", x + 48, y + 118, "B", 16, INK)
     para(c, "On the Upgrade page. Keep the .kdimg you just wrote.", x + 48, y + 96, 280, "S", 11, MUTED, 14)
     rr(c, x + 350, y + 78, 150, 64, 8, fill=RED_S, stroke=RED, sw=1)
-    center(c, "Not Mujina", x + 425, y + 112, "B", 13, RED)
+    center(c, "Factory kburn", x + 425, y + 112, "B", 11, RED)
     center(c, "if it will not start,", x + 425, y + 94, "S", 8, MUTED)
     center(c, "write the .kdimg again", x + 425, y + 82, "S", 8, MUTED)
 
@@ -746,7 +746,7 @@ def page_open(c, a):
         "From a computer on the same network, open https:// and the IP on the screen.",
         "Pelish and Canaan are on the login page. Pick Light or Dark.",
         "Log in with admin and admin. If the browser warns you, continue.",
-        "Next you see Overview. Later updates are a .aup, not Mujina.",
+        "Next you see Overview. Later updates are a .aup, not another custom image.",
     ], 36, 148, 540, 12.5, 15, 4)
 
 
@@ -861,7 +861,7 @@ def page_overview(c, a):
     rx = mx + 20 + (mw - 32) / 2
     rw = (mw - 32) / 2
     rr(c, rx, fy + 12, rw, 52, 8, fill=RED_S, stroke=RED, sw=1)
-    center(c, "Do not flash Mujina", rx + rw / 2, fy + 40, "B", 9, RED)
+    center(c, "Do not flash other custom images", rx + rw / 2, fy + 40, "B", 8, RED)
     center(c, "write the .kdimg again", rx + rw / 2, fy + 24, "S", 8, MUTED)
 
     sentences(c, [
